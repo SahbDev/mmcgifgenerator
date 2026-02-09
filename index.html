@@ -6,21 +6,120 @@
     <title>MMC - Gif Generator</title>
     <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111; color: #eee; text-align: center; padding: 40px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; background: #1a1a1a; padding: 30px; border-radius: 8px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; border-bottom: 1px solid #333; padding-bottom: 20px; }
-        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #111; 
+            color: #eee; 
+            text-align: center; 
+            padding: 40px; 
+            margin: 0;
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        }
+
+        h1 { 
+            margin-top: 0; 
+            font-weight: 300; 
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        /* File Input Styling */
         input[type=file] { display: none; }
-        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; transition: all 0.3s; margin: 20px 0; }
-        .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        button { background-color: #000; color: white; padding: 15px 30px; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; width: 200px; }
-        button:hover:not(:disabled) { background-color: #fff; color: #000; }
-        button:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
+        .custom-file-upload {
+            border: 1px solid #444;
+            display: inline-block;
+            padding: 12px 24px;
+            cursor: pointer;
+            background-color: #222;
+            color: #fff;
+            border-radius: 4px;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
 
-        #status { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
-        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; background-color: #000; }
+        .custom-file-upload:hover {
+            background-color: #333;
+            border-color: #666;
+        }
+
+        /* Button Styling */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button { 
+            background-color: #000; 
+            color: white; 
+            padding: 15px 30px; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            width: 200px;
+        }
+
+        button:hover:not(:disabled) { 
+            background-color: #fff; 
+            color: #000;
+        }
+
+        button:disabled { 
+            background-color: #222; 
+            color: #555; 
+            border-color: #333;
+            cursor: not-allowed; 
+        }
+
+        #status { 
+            margin: 15px 0; 
+            color: #888; 
+            font-size: 0.9em; 
+            min-height: 20px;
+            line-height: 1.6;
+        }
+
+        /* Highlight box for instructions */
+        .instruction-box {
+            background-color: #2a2a2a;
+            border-left: 4px solid #FFD700; /* Gold color */
+            color: #ddd;
+            padding: 15px;
+            margin: 20px auto;
+            text-align: left;
+            font-size: 0.9em;
+            width: fit-content;
+            display: none; /* Hidden by default */
+        }
+        
+        .highlight-green { color: #4CAF50; font-weight: bold; }
+        .highlight-yellow { color: #FFD700; font-weight: bold; }
+
+        canvas { 
+            max-width: 100%; 
+            border: 1px solid #333; 
+            margin-top: 20px; 
+            background-color: #000; 
+        }
+
         .hidden { display: none; }
     </style>
 </head>
@@ -30,12 +129,19 @@
     <h1>MMC - Gif Generator</h1>
     <p style="color: #666;">Convert animated GIFs into SL Texture Atlases.</p>
     
-    <label for="gifInput" class="custom-file-upload">Select GIF File</label>
+    <label for="gifInput" class="custom-file-upload">
+        Select GIF File
+    </label>
     <input type="file" id="gifInput" accept="image/gif">
     
     <div id="status">Waiting for file...</div>
 
-    <div class="hidden"><img id="tempImg" rel:auto_play="0" /></div>
+    <div id="instructionBox" class="instruction-box"></div>
+
+    <div class="hidden">
+        <img id="tempImg" rel:auto_play="0" />
+    </div>
+
     <canvas id="outputCanvas"></canvas>
     
     <div class="btn-group">
@@ -47,23 +153,22 @@
 <script>
     const fileInput = document.getElementById('gifInput');
     const statusDiv = document.getElementById('status');
+    const instructionBox = document.getElementById('instructionBox');
     const tempImg = document.getElementById('tempImg');
     const outputCanvas = document.getElementById('outputCanvas');
     const btn1024 = document.getElementById('btn1024');
     const btn2048 = document.getElementById('btn2048');
     
     let superGif = null;
-    let originalFileName = "animation";
     let gifData = { cols: 4, rows: 4, fps: 15 };
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Limpa nome do arquivo para evitar caracteres invalidos
-        originalFileName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, "");
-        
+        // Reset UI
         statusDiv.innerText = "Loading GIF...";
+        instructionBox.style.display = 'none';
         btn1024.disabled = true;
         btn2048.disabled = true;
         outputCanvas.height = 0;
@@ -90,28 +195,38 @@
         const width = superGif.get_canvas().width;
         const height = superGif.get_canvas().height;
         
-        // 1. Calcula Grade
+        // 1. Calculate Grid
         const cols = Math.ceil(Math.sqrt(len));
         const rows = Math.ceil(len / cols);
         
-        // 2. Tenta calcular FPS original (Delay vem em centesimos de segundo)
-        // Se der erro, assume 15 FPS padrao
+        // 2. Calculate FPS
         let delay = 10;
         try { delay = superGif.get_frames()[0].delay; } catch(e){}
         const fps = delay > 0 ? Math.round(100 / delay) : 15;
 
-        // Salva dados globais
+        // Save Data
         gifData = { cols: cols, rows: rows, fps: fps };
+        const suffixExample = `_${cols}_${rows}_${fps}`;
 
-        statusDiv.innerText = `Ready! Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
+        // Update UI
+        statusDiv.innerHTML = `<span class="highlight-green">✔ Processing Complete!</span><br>Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
+        
+        // Show Instruction Box
+        instructionBox.style.display = 'inline-block';
+        instructionBox.innerHTML = `
+            <span class="highlight-yellow">⚠ IMPORTANT:</span><br>
+            The file will be saved as <strong>YOURGIFNAME${suffixExample}.png</strong><br><br>
+            You can rename "YOURGIFNAME" to anything you want, but<br>
+            <strong>YOU MUST KEEP THE NUMBERS AT THE END</strong> (${suffixExample})<br>
+            for the script to work correctly.
+        `;
 
-        // Configura Canvas
+        // Draw Canvas
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d');
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-        // Desenha Frames
         for (let i = 0; i < len; i++) {
             superGif.move_to(i);
             const frameCanvas = superGif.get_canvas();
@@ -123,7 +238,7 @@
         btn1024.disabled = false;
         btn2048.disabled = false;
         
-        // Atualiza cliques dos botoes
+        // Button Actions
         btn1024.onclick = () => downloadResized(1024);
         btn2048.onclick = () => downloadResized(2048);
     }
@@ -135,9 +250,8 @@
         const tCtx = tempCanvas.getContext('2d');
         tCtx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
 
-        // GERA O NOME MAGICO PARA O SCRIPT LER
-        // Formato: Nome_Colunas_Linhas_FPS.png
-        const finalName = `${originalFileName}_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
+        // FORCE DEFAULT NAME "YOURGIFNAME"
+        const finalName = `YOURGIFNAME_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
 
         const link = document.createElement('a');
         link.download = finalName;
