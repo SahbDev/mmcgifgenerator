@@ -16,6 +16,27 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
+        /* --- TELA DE BLOQUEIO (Visual do tester.html) --- */
+        #lockedScreen {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 80vh; text-align: center; color: #d9534f;
+        }
+        
+        /* O GIF de Erro */
+        .lock-screen-gif { 
+            max-width: 150px; margin-bottom: 20px; border-radius: 5px;
+        }
+        
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
+        
+        #lockReason { 
+            font-size: 0.9em; margin-top: 15px; opacity: 0.6; 
+            font-family: monospace; color: #bbb; border: 1px solid #333; 
+            padding: 10px; background: #1a1a1a; 
+        }
+
+        /* --- CONTEÚDO DO APP (Sua versão Perfeita) --- */
         #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
@@ -94,20 +115,18 @@
             margin-bottom: 5px; font-size: 0.9em;
         }
         
-        /* AVISO DE NOME */
         .filename-warning {
             font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em;
         }
-
-        #lockedScreen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; text-align: center; color: #d9534f; }
-        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="lockedScreen">
+        <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
         <h2>Access Denied</h2>
-        <p>Use your in-world HUD to generate your access link.</p>
+        <p>You need to use your in-world HUD to generate your access link.</p>
+        <p id="lockReason">Checking security...</p>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -151,7 +170,6 @@
                     </div>
 
                     <div class="controls-row">
-                        
                         <div id="autoGridArea" class="control-group">
                             <label>Smart Grid Suggestions:</label>
                             <select id="gridSelect" class="res-select" onchange="triggerUpdate()">
@@ -175,7 +193,6 @@
                         Original GIF: <strong id="origFramesDisplay" style="color:#eee">0</strong> frames.<br>
                         <span id="gridCalcDisplay"></span>
                     </div>
-
                 </div>
 
                 <div id="fileNameDisplay" class="filename-display">...</div>
@@ -192,28 +209,62 @@
     </div>
 
 <script>
+    // ==========================================
+    // SISTEMA DE SEGURANÇA (IDÊNTICO AO SEU)
+    // ==========================================
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
-    
+    const LINK_EXPIRATION_MINUTES = 2; 
+
     function checkAccess() {
         const params = new URLSearchParams(window.location.search);
         const userUUID = params.get('id');
         const urlToken = params.get('token');
         const timestamp = params.get('ts'); 
+        
+        const lockReason = document.getElementById('lockReason');
+        const lockedScreen = document.getElementById('lockedScreen');
+        const appContent = document.getElementById('appContent');
+
+        // 1. Validação Básica
         if (!userUUID || !urlToken || !timestamp) {
-            if (window.location.protocol === 'file:') {
-                document.getElementById('lockedScreen').style.display = 'none';
-                document.getElementById('appContent').style.display = 'flex';
-            }
+            lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
-        const calculatedToken = CryptoJS.MD5(userUUID + timestamp + SECRET_KEY + ":0").toString();
+
+        // 2. Anti-Replay
+        const storageKey = "used_token_" + urlToken;
+        if (localStorage.getItem(storageKey)) {
+             lockReason.innerText = "Error: This link has already been used. Please generate a new one.";
+             return;
+        }
+
+        // 3. Validação de Tempo
+        const linkTime = parseInt(timestamp) * 1000;
+        const now = new Date().getTime();
+        const diffMinutes = (now - linkTime) / 1000 / 60;
+        
+        if (diffMinutes > LINK_EXPIRATION_MINUTES) {
+            lockReason.innerText = "Error: Link expired (Time limit exceeded). Generate a new one.";
+            return;
+        }
+
+        // 4. Hash Check (Igual ao LSL)
+        const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
+        const calculatedToken = CryptoJS.MD5(stringToHash).toString();
+
         if (urlToken === calculatedToken) {
-            document.getElementById('lockedScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'flex';
+            localStorage.setItem(storageKey, "true");
+            lockedScreen.style.display = 'none';
+            appContent.style.display = 'flex';
+        } else {
+            lockReason.innerText = "Error: Security Token Mismatch.";
         }
     }
     checkAccess();
 
+    // ==========================================
+    // LÓGICA DO GIF CREATOR (A VERSÃO PERFEITA)
+    // ==========================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const outputCanvas = document.getElementById('outputCanvas');
@@ -250,7 +301,6 @@
         gifResultsArea.style.display = 'none';
         gifStatus.innerText = "Analyzing...";
         
-        // Exibe progresso
         gifProgressContainer.style.display = 'block';
         gifProgressBar.style.width = '10%';
         gifProgressBar.innerText = '10%';
@@ -261,16 +311,13 @@
             .then(function (frames) {
                 currentFrames = frames;
                 
-                // Dimensões seguras do primeiro frame
                 const tempCanvas = frames[0].getImage(); 
                 const w = tempCanvas.width;
                 const h = tempCanvas.height;
                 
-                // Calcula Auto
                 availableGrids = calculateAllGrids(frames.length, w, h);
                 populateGridSelector(availableGrids);
                 
-                // Configura Manual
                 origFramesDisplay.innerText = frames.length;
                 customCols.value = availableGrids[0].c;
                 customRows.value = availableGrids[0].r;
@@ -281,7 +328,6 @@
         reader.readAsDataURL(file);
     });
 
-    // Lógica de Toggle
     function toggleCustomMode() {
         isCustomMode = !isCustomMode;
         if (isCustomMode) {
@@ -311,7 +357,6 @@
         let selectedGrid;
 
         if (isCustomMode) {
-            // Lógica Manual
             const c = parseInt(customCols.value) || 1;
             const r = parseInt(customRows.value) || 1;
             const capacity = c * r;
@@ -327,12 +372,10 @@
             }
             gridCalcDisplay.innerHTML = msg;
 
-            // Manual usa frames até a capacidade ou total
             let framesToUse = Math.min(total, capacity);
             selectedGrid = { c: c, r: r, usedFrames: framesToUse };
 
         } else {
-            // Lógica Auto
             const index = gridSelect.value;
             selectedGrid = availableGrids[index];
         }
@@ -340,7 +383,6 @@
         renderWithGrid(selectedGrid);
     }
 
-    // --- CÁLCULO AUTO (G2SLA) ---
     function calculateAllGrids(count, imgW, imgH) {
         let candidates = [];
         let imgRatio = imgW / imgH;
@@ -354,7 +396,6 @@
                 let totalSlots = c * r;
                 let waste = totalSlots - targetCount;
 
-                // Filtro relaxado para permitir opções maiores
                 if (waste <= 8) {
                     let cellW = 1024 / c;
                     let cellH = 1024 / r;
@@ -364,7 +405,6 @@
                     let score = (waste * 1.5) + (shapeDiff * 5); 
                     if (targetCount < count) score += 2;
 
-                    // Etiquetas Limpas
                     let label = `${c} x ${r}`;
                     if (c > r) label += " - Horizontal";
                     else if (r > c) label += " - Vertical";
@@ -396,11 +436,8 @@
         gridSelect.selectedIndex = 0;
     }
 
-    // --- RENDERIZAÇÃO FINAL ---
     function renderWithGrid(grid) {
         const targetSize = parseInt(resSelect.value);
-        
-        // Garante uso seguro de frames
         let safeUsedFrames = grid.usedFrames;
         if (safeUsedFrames > currentFrames.length) safeUsedFrames = currentFrames.length;
 
@@ -420,7 +457,6 @@
         const cellW = targetSize / grid.c;
         const cellH = targetSize / grid.r;
 
-        // Desenha Frames (Modo Seguro: getImage)
         framesToRender.forEach((f, i) => {
             const x = (i % grid.c) * cellW;
             const y = Math.floor(i / grid.c) * cellH;
@@ -428,7 +464,6 @@
             ctx.drawImage(frameImg, 0, 0, frameImg.width, frameImg.height, x, y, cellW, cellH);
         });
 
-        // Padding (Preenche vazios)
         const totalSlots = grid.c * grid.r;
         if (totalSlots > count && count > 0) {
             const lastFrame = framesToRender[count - 1];
@@ -441,7 +476,6 @@
             }
         }
 
-        // Atualiza Progresso e Status
         gifProgressBar.style.width = '100%';
         gifProgressBar.innerText = '100%';
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
