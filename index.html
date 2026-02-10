@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MMC - Creator Suite</title>
     
-    <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
+    <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
 
     <style>
@@ -148,12 +148,7 @@
         }
         .download-link:hover { background: #4CAF50; color: #000; }
 
-        /* FIX: Use absolute positioning instead of display:none to ensure JS can read dimensions */
-        .visually-hidden { 
-            position: absolute; 
-            left: -9999px; 
-            visibility: hidden; 
-        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -174,8 +169,6 @@
         
         <div id="gifStatus" class="status-msg">Waiting for file...</div>
         <div id="gifInstruction" class="instruction-text"></div>
-
-        <div id="gifProcessor" class="visually-hidden"></div>
         
         <canvas id="outputCanvas"></canvas>
         
@@ -228,24 +221,22 @@
     }
 
     // ==========================================================
-    // LOGIC: GIF TO TEXTURE (FIXED)
+    // LOGIC: GIF TO TEXTURE (REBUILT with gif-frames)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const gifInstruction = document.getElementById('gifInstruction');
-    const gifProcessor = document.getElementById('gifProcessor'); 
     const outputCanvas = document.getElementById('outputCanvas');
     const btn1024 = document.getElementById('btn1024');
     const btn2048 = document.getElementById('btn2048');
     
-    let superGif = null;
     let gifData = { cols: 4, rows: 4, fps: 15 };
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        gifStatus.innerText = "Loading GIF...";
+        gifStatus.innerText = "Loading GIF data...";
         gifInstruction.style.display = 'none';
         btn1024.disabled = true;
         btn2048.disabled = true;
@@ -253,44 +244,38 @@
 
         const reader = new FileReader();
         reader.onload = function(event) {
-            // Clean up previous instance
-            gifProcessor.innerHTML = ''; 
+            const dataUrl = event.target.result;
             
-            const newImg = document.createElement('img');
-            // Important: Set attributes before loading
-            newImg.setAttribute('rel:auto_play', '0'); 
-            
-            // Wait for image to load in browser memory first
-            newImg.onload = function() {
-                // Initialize SuperGif
-                superGif = new SuperGif({ gif: newImg } );
-                superGif.load(function() {
-                    processGif();
-                });
-            };
-            
-            newImg.src = event.target.result;
-            gifProcessor.appendChild(newImg);
+            // USE MODERN LIBRARY TO PARSE
+            gifFrames({ url: dataUrl, frames: 'all', outputType: 'canvas' })
+            .then(function (frameData) {
+                processGifData(frameData);
+            })
+            .catch(function (err) {
+                gifStatus.innerText = "Error parsing GIF: " + err;
+            });
         };
         reader.readAsDataURL(file);
     });
 
-    function processGif() {
-        const len = superGif.get_length();
+    function processGifData(frames) {
+        const len = frames.length;
         
-        // Error handling
-        if (len <= 1) {
-            gifStatus.innerText = "Error: Could not separate frames. Try another GIF.";
+        if (len <= 0) {
+            gifStatus.innerText = "Error: No frames found.";
             return;
         }
 
-        const width = superGif.get_canvas().width;
-        const height = superGif.get_canvas().height;
+        // Get dimensions from first frame
+        const width = frames[0].frameInfo.width;
+        const height = frames[0].frameInfo.height;
+        
+        // Calculate Grid
         const cols = Math.ceil(Math.sqrt(len));
         const rows = Math.ceil(len / cols);
         
-        let delay = 10;
-        try { delay = superGif.get_frames()[0].delay; } catch(e){}
+        // Calculate FPS (Delay is in centiseconds usually)
+        let delay = frames[0].frameInfo.delay;
         const fps = delay > 0 ? Math.round(100 / delay) : 15;
 
         gifData = { cols: cols, rows: rows, fps: fps };
@@ -310,13 +295,13 @@
         const ctx = outputCanvas.getContext('2d');
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-        for (let i = 0; i < len; i++) {
-            superGif.move_to(i); 
-            const frameCanvas = superGif.get_canvas();
+        // Draw every frame
+        frames.forEach(function (frame, i) {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            ctx.drawImage(frameCanvas, col * width, row * height);
-        }
+            // getImage() returns a canvas element for that frame
+            ctx.drawImage(frame.getImage(), col * width, row * height);
+        });
 
         btn1024.disabled = false;
         btn2048.disabled = false;
@@ -325,8 +310,22 @@
         btn2048.onclick = () => downloadResized(2048);
     }
 
+    function downloadResized(size) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
+        
+        const finalName = `YOURGIFNAME_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
+        const link = document.createElement('a');
+        link.download = finalName;
+        link.href = tempCanvas.toDataURL("image/png");
+        link.click();
+    }
+
     // ==========================================================
-    // LOGIC: VIDEO TO GIF
+    // LOGIC: VIDEO TO GIF (UNCHANGED)
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
