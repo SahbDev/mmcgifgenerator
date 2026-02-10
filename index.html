@@ -185,7 +185,7 @@
                 
                 <div class="controls-grid">
                     <div class="control-group"><label>Start (Sec)</label><input type="number" id="startTime" value="0" min="0" step="0.5"></div>
-                    <div class="control-group"><label>Duration (Max 10s)</label><input type="number" id="duration" value="2" min="0.5" max="10" step="0.5"></div>
+                    <div class="control-group"><label>Duration (Sec)</label><input type="number" id="duration" value="2" min="0.5" max="60" step="0.5"></div>
                     <div class="control-group">
                         <label>Max Width / Quality</label>
                         <select id="resolution">
@@ -395,7 +395,7 @@
     }
 
     // ==========================================================
-    // 3. FERRAMENTA VIDEO -> GIF (CORREÇÃO FINAL DE TRAVAMENTO)
+    // 3. FERRAMENTA VIDEO -> GIF (MODO ROBUSTO)
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
@@ -404,22 +404,27 @@
     const videoProgressContainer = document.getElementById('videoProgressContainer');
     const videoProgressBar = document.getElementById('videoProgressBar');
     
-    // --- SAFETY LIMIT ---
-    const MAX_ALLOWED_DURATION = 10; 
+    // --- NOVO LIMITE: 200MB ---
+    const MAX_FILE_SIZE_MB = 200;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
     let uploadedVideo = null;
     let tempVideoObjUrl = null; 
     let currentResultBlobUrl = null; 
 
-    // --- NOVA FUNÇÃO ANTI-TRAVAMENTO ---
-    // Usa fetch para converter base64 em Blob sem bloquear a thread principal (CPU)
-    async function convertBase64ToBlobSafe(dataURI) {
+    // Função de conversão clássica (mais lenta mas mais compatível)
+    // para evitar travamento em 100%
+    function dataURItoBlobClassic(dataURI) {
         try {
-            const res = await fetch(dataURI);
-            const blob = await res.blob();
-            return blob;
-        } catch (e) {
-            console.error("Async blob conversion failed", e);
+            var byteString = atob(dataURI.split(',')[1]);
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], {type: mimeString});
+        } catch(e) {
             return null;
         }
     }
@@ -433,25 +438,28 @@
     videoInput.addEventListener('change', e => {
         clearVideoMemory();
         uploadedVideo = e.target.files[0];
+        
         if (uploadedVideo) { 
+            // 1. CHECAGEM DE TAMANHO
+            if (uploadedVideo.size > MAX_FILE_SIZE_BYTES) {
+                alert(`Error: File is too large. Max allowed is ${MAX_FILE_SIZE_MB}MB.`);
+                videoStatus.innerHTML = `<span style="color:#d9534f">Error: File > ${MAX_FILE_SIZE_MB}MB</span>`;
+                this.value = ""; // Limpa o input
+                uploadedVideo = null;
+                return;
+            }
+
             videoStatus.innerText = "Video: " + uploadedVideo.name; 
             convertVideoBtn.disabled = false; 
 
+            // Carrega metadados (duração)
             const tempVideo = document.createElement('video');
             tempVideo.preload = 'metadata';
-            
             tempVideo.onloadedmetadata = function() {
                 const realDuration = this.duration;
-                let setDuration = 2; 
-
                 if(realDuration && !isNaN(realDuration)) {
-                    if (realDuration > MAX_ALLOWED_DURATION) {
-                        setDuration = MAX_ALLOWED_DURATION;
-                        videoStatus.innerHTML = `Video: ${uploadedVideo.name} <span class="highlight-warning">(Cropped to 10s limit)</span>`;
-                    } else {
-                        setDuration = realDuration;
-                    }
-                    document.getElementById('duration').value = setDuration.toFixed(1);
+                    // Sem limite de tempo, apenas preenche o valor
+                    document.getElementById('duration').value = realDuration.toFixed(1);
                 }
                 URL.revokeObjectURL(tempVideo.src);
             };
@@ -469,12 +477,7 @@
         
         const start = parseFloat(document.getElementById('startTime').value);
         let dur = parseFloat(document.getElementById('duration').value);
-        
-        if (dur > MAX_ALLOWED_DURATION) {
-            dur = MAX_ALLOWED_DURATION;
-            document.getElementById('duration').value = MAX_ALLOWED_DURATION;
-        }
-        if (!dur || dur <= 0) dur = 2;
+        if (!dur || dur <= 0) dur = 2; // Fallback seguro
 
         const resVal = document.getElementById('resolution').value;
         
@@ -489,10 +492,9 @@
                 finalW = this.videoWidth; 
                 finalH = this.videoHeight; 
                 
-                // OTIMIZAÇÃO: Se for original e muito grande, limita a 800px para não crashar
-                // e ajusta o FPS para economizar memória
+                // Trava de segurança para resolução extrema
                 if (finalW > 1280) {
-                     finalW = 1280; // Hard limit interno para evitar crash do navegador
+                     finalW = 1280; 
                      finalH = Math.round(1280 * (this.videoHeight / this.videoWidth));
                 }
             } else { 
@@ -501,14 +503,10 @@
                 finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); 
             }
 
-            // Reduz quadros por segundo em vídeos HD para evitar estouro de memória
-            let interval = 0.1;
-            if (finalW >= 800) {
-                interval = 0.15; // ~7 FPS (Mais leve)
-            }
-            if (finalW >= 1024 && dur > 5) {
-                interval = 0.2; // ~5 FPS (Muito mais leve para arquivos longos)
-            }
+            // Otimização de FPS para evitar crash de memória
+            let interval = 0.1; // 10 FPS
+            if (finalW >= 800) interval = 0.15; // Reduz um pouco se for HD
+            if (finalW >= 1024 && dur > 10) interval = 0.2; // Reduz bem se for HD e Longo
 
             gifshot.createGIF({
                 video: [tempVideoObjUrl], 
@@ -518,65 +516,67 @@
                 numFrames: (dur / interval), 
                 offset: start,
                 progressCallback: p => { 
+                    // Limita visualmente a 100%
                     const pc = Math.min(100, Math.round(p * 100));
                     videoProgressBar.style.width = pc + '%'; 
                     videoProgressBar.innerText = pc + '%';
                 }
-            }, async (obj) => { // Callback transformado em ASYNC
+            }, obj => {
                 
-                if (!obj.error) {
-                    // Passo extra: Converter o base64 gigante em Blob usando Fetch
-                    // Isso evita que a thread principal trave (freezing)
-                    const imgBlob = await convertBase64ToBlobSafe(obj.image);
-                    
+                // O Timeout permite que a barra chegue a 100% antes de tentar converter o Blob
+                setTimeout(() => {
                     videoProgressContainer.style.display = 'none';
+                    
+                    if (!obj.error) {
+                        const imgBlob = dataURItoBlobClassic(obj.image);
+                        
+                        if (!imgBlob) {
+                            videoStatus.innerText = "Error: Result file too heavy for browser.";
+                            convertVideoBtn.disabled = false;
+                            return;
+                        }
 
-                    if (!imgBlob) {
-                        videoStatus.innerText = "Error: Browser run out of memory.";
+                        // Limpa memória
+                        obj.image = null; 
+
+                        currentResultBlobUrl = URL.createObjectURL(imgBlob);
+                        videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
+
+                        // SE FOR ORIGINAL OU GRANDE, ESCONDE PREVIEW
+                        if (resVal === "original" || finalW > 800) {
+                            videoPreviewContainer.innerHTML = `
+                                <div class="heavy-file-icon">✅</div>
+                                <div class="heavy-warning">File created! (Preview hidden to prevent lag)</div>
+                            `;
+                        } else {
+                            const img = document.createElement('img'); 
+                            img.src = currentResultBlobUrl; 
+                            videoPreviewContainer.appendChild(img);
+                        }
+
+                        const actions = document.createElement('div'); 
+                        actions.className = 'result-actions';
+                        
+                        const dl = document.createElement('a');
+                        dl.href = currentResultBlobUrl; 
+                        dl.download = "video.gif"; 
+                        dl.innerText = "Download GIF"; 
+                        dl.className = "download-link-btn";
+                        
+                        const rst = document.createElement('button');
+                        rst.innerText = "Start Over"; 
+                        rst.className = "action-btn"; 
+                        rst.onclick = function() { resetVideoTool(); };
+                        
+                        actions.append(dl, rst); 
+                        videoPreviewContainer.append(actions);
+
+                    } else { 
+                        console.error(obj.errorCode);
+                        videoStatus.innerText = "Error: " + obj.errorCode; 
                         convertVideoBtn.disabled = false;
-                        return;
                     }
-
-                    // Limpa a variável pesada da memória imediatamente
-                    obj.image = null; 
-
-                    currentResultBlobUrl = URL.createObjectURL(imgBlob);
-                    videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
-
-                    if (resVal === "original" || finalW > 800) {
-                        videoPreviewContainer.innerHTML = `
-                            <div class="heavy-file-icon">✅</div>
-                            <div class="heavy-warning">File created! (Preview hidden to prevent lag)</div>
-                        `;
-                    } else {
-                        const img = document.createElement('img'); 
-                        img.src = currentResultBlobUrl; 
-                        videoPreviewContainer.appendChild(img);
-                    }
-
-                    const actions = document.createElement('div'); 
-                    actions.className = 'result-actions';
-                    
-                    const dl = document.createElement('a');
-                    dl.href = currentResultBlobUrl; 
-                    dl.download = "video.gif"; 
-                    dl.innerText = "Download GIF"; 
-                    dl.className = "download-link-btn";
-                    
-                    const rst = document.createElement('button');
-                    rst.innerText = "Start Over"; 
-                    rst.className = "action-btn"; 
-                    rst.onclick = function() { resetVideoTool(); };
-                    
-                    actions.append(dl, rst); 
-                    videoPreviewContainer.append(actions);
-
-                } else { 
-                    videoProgressContainer.style.display = 'none';
-                    console.error(obj.errorCode);
-                    videoStatus.innerText = "Error: " + obj.errorCode; 
-                    convertVideoBtn.disabled = false;
-                }
+                }, 200); // Pequeno delay para a UI respirar
             });
         };
         
