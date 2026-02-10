@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTÉTICA CLÁSSICA (A QUE VOCÊ GOSTA) --- */
+        /* --- ESTÉTICA CLÁSSICA (ORIGINAL) --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -52,7 +52,7 @@
         button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
         button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
 
-        /* PAINEL DE CONTROLE (O CINZA CLÁSSICO) */
+        /* PAINEL DE CONTROLE */
         .controls-panel {
             background: #222; border: 1px solid #444; border-radius: 6px;
             padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
@@ -71,11 +71,9 @@
             font-size: 13px; cursor: pointer; width: 240px;
         }
 
-        /* CHECKBOX CLÁSSICO */
         .bg-option { display: flex; align-items: center; margin-top: 5px; font-size: 0.85em; color: #bbb; cursor: pointer; }
         .bg-option input { margin-right: 8px; cursor: pointer; }
 
-        /* MODO MANUAL TOGGLE */
         .toggle-btn {
             background: #333; border: 1px solid #666; color: #fff;
             padding: 5px 15px; font-size: 0.8em; cursor: pointer; border-radius: 20px;
@@ -94,7 +92,6 @@
         .warn-text { color: #e6b800; }
         .good-text { color: #4CAF50; }
 
-        /* PREVIEW E RESULTADOS */
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; border: 1px solid #333; }
         
@@ -158,7 +155,7 @@
                             <label>Texture Quality / Cost:</label>
                             <select id="resSelect" class="res-select">
                                 <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
-                                <option value="2048">2048px (High + Sharpen) 50L$ Upload</option>
+                                <option value="2048">2048px (High / Big Frames) 50L$ Upload</option>
                             </select>
                             
                             <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
@@ -176,7 +173,7 @@
                     <div class="controls-row">
                         
                         <div id="autoGridArea" class="control-group">
-                            <label>Smart Grid Suggestions (Clone Logic):</label>
+                            <label>Smart Grid Suggestions:</label>
                             <div id="gridInfoDisplay" style="font-family: monospace; color: #4CAF50; margin-top: 5px;">Waiting...</div>
                         </div>
 
@@ -210,7 +207,7 @@
 
 <script>
     // ==========================================
-    // 1. SEGURANÇA (MMC STANDARD)
+    // 1. SEGURANÇA
     // ==========================================
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
     const LINK_EXPIRATION_MINUTES = 2; 
@@ -257,7 +254,7 @@
     checkAccess();
 
     // ==========================================
-    // 2. LÓGICA DO GIF CREATOR (CLONE + SHARPEN)
+    // 2. GIF LOGIC (RAW QUALITY)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -265,14 +262,12 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const gifResultsArea = document.getElementById('gifResultsArea');
-    
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
-    
     const autoGridArea = document.getElementById('autoGridArea');
     const manualGridArea = document.getElementById('manualGridArea');
     const toggleCustomBtn = document.getElementById('toggleCustomBtn');
@@ -317,7 +312,6 @@
         });
     });
 
-    // MODO MANUAL TOGGLE
     function toggleCustomMode() {
         isCustomMode = !isCustomMode;
         if (isCustomMode) {
@@ -325,8 +319,6 @@
             manualGridArea.style.display = 'flex';
             toggleCustomBtn.innerText = "← Back to Auto";
             toggleCustomBtn.classList.add("active");
-            
-            // Popula inputs com o cálculo atual
             customCols.value = xFrames;
             customRows.value = yFrames;
         } else {
@@ -334,7 +326,7 @@
             manualGridArea.style.display = 'none';
             toggleCustomBtn.innerText = "✎ Edit Grid Manually";
             toggleCustomBtn.classList.remove("active");
-            calculateGridLogic(); // Recalcula auto
+            calculateGridLogic(); 
         }
         updateFileName();
     }
@@ -345,7 +337,7 @@
         updateFileName();
     }
 
-    // LÓGICA MATEMÁTICA DO PROGRAMA ORIGINAL (C#)
+    // CLONE DO C# - LÓGICA DE GRADE
     function calculateGridLogic() {
         let frameCount = currentFrames.length;
         let num = Math.round(Math.sqrt(frameCount)); 
@@ -368,48 +360,8 @@
 
     function updateFileName() {
         let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
-        // SEMPRE 10 FPS (Clone perfeito)
         finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
         fileNameDisplay.innerText = finalFileName;
-    }
-
-    // ALGORITMO DE NITIDEZ (SHARPEN) PARA 2048px
-    function applySharpen(ctx, w, h, mix) {
-        const weights = [0, -1, 0, -1, 5, -1, 0, -1, 0];
-        const katet = Math.round(Math.sqrt(weights.length));
-        const half = (katet * 0.5) | 0;
-        const dstData = ctx.createImageData(w, h);
-        const dstBuff = dstData.data;
-        const srcData = ctx.getImageData(0, 0, w, h);
-        const srcBuff = srcData.data;
-        const y = h; const x = w;
-        
-        for (let i = 0; i < y; i++) {
-            for (let j = 0; j < x; j++) {
-                const sy = i; const sx = j;
-                const dstOff = (i * x + j) * 4;
-                let r = 0, g = 0, b = 0;
-                
-                for (let cy = 0; cy < katet; cy++) {
-                    for (let cx = 0; cx < katet; cx++) {
-                        const scy = sy + cy - half;
-                        const scx = sx + cx - half;
-                        if (scy >= 0 && scy < y && scx >= 0 && scx < x) {
-                            const srcOff = (scy * x + scx) * 4;
-                            const wt = weights[cy * katet + cx];
-                            r += srcBuff[srcOff] * wt;
-                            g += srcBuff[srcOff + 1] * wt;
-                            b += srcBuff[srcOff + 2] * wt;
-                        }
-                    }
-                }
-                dstBuff[dstOff] = Math.min(255, Math.max(0, r));
-                dstBuff[dstOff + 1] = Math.min(255, Math.max(0, g));
-                dstBuff[dstOff + 2] = Math.min(255, Math.max(0, b));
-                dstBuff[dstOff + 3] = srcBuff[dstOff + 3];
-            }
-        }
-        ctx.putImageData(dstData, 0, 0);
     }
 
     btnDownload.onclick = function() {
@@ -428,7 +380,7 @@
             canvas.height = yFrames * height;
             let ctx = canvas.getContext('2d');
 
-            // --- LÓGICA DE DESENHO (C# CLONE) ---
+            // --- LÓGICA DE DESENHO ---
             let num2 = currentFrames.length;
             if (num2 % 2 != 0) num2++; 
             let num3 = 0; 
@@ -439,7 +391,7 @@
                     if (num3 < currentFrames.length) {
                         frameToDraw = currentFrames[num3];
                     } else {
-                        frameToDraw = currentFrames[0]; // Padding com frame 0
+                        frameToDraw = currentFrames[0]; // Padding
                     }
 
                     if (frameToDraw) {
@@ -451,35 +403,34 @@
                 }
             }
 
-            // --- RESIZE & SHARPEN ---
+            // --- RESIZE PURO (SEM FILTRO) ---
             let targetMax = parseInt(resSelect.value); 
             
             if (canvas.width > targetMax || canvas.height > targetMax || targetMax === 2048) {
                 let tempCanvas = document.createElement('canvas');
                 let tCtx = tempCanvas.getContext('2d');
-                let num6 = targetMax; let num7 = targetMax;
+                
+                // Força o tamanho quadrado final (1024 ou 2048)
+                let num6 = targetMax;
+                let num7 = targetMax;
                 
                 tempCanvas.width = num6; tempCanvas.height = num7;
+                
+                // Alta qualidade de resize nativa do browser (sem post-process)
                 tCtx.imageSmoothingEnabled = true;
                 tCtx.imageSmoothingQuality = 'high';
                 tCtx.drawImage(canvas, 0, 0, num6, num7);
                 
-                // Aplica Sharpen SE for 2048
-                if (targetMax === 2048) {
-                    gifStatus.innerText = "Applying Sharpen Filter...";
-                    applySharpen(tCtx, num6, num7, 1.0);
-                }
-
                 canvas.width = num6; canvas.height = num7;
                 ctx.drawImage(tempCanvas, 0, 0);
             }
 
-            // --- SALVAMENTO ---
+            // --- SALVAR ---
             const link = document.createElement('a');
             link.download = finalFileName;
 
             if (!transparentChkbox.checked) {
-                // JPG (Fundo Preto para evitar Ghosting)
+                // JPG (Fundo Preto)
                 let compositeCanvas = document.createElement('canvas');
                 compositeCanvas.width = canvas.width;
                 compositeCanvas.height = canvas.height;
@@ -490,7 +441,7 @@
                 link.href = compositeCanvas.toDataURL("image/jpeg", 0.95);
                 link.download += ".jpg";
             } else {
-                // PNG (Transparente)
+                // PNG
                 link.href = canvas.toDataURL("image/png");
                 link.download += ".png";
             }
