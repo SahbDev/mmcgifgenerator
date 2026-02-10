@@ -53,34 +53,43 @@
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none;
             border-bottom: 1px dotted #fff; }
 
-        /* TABS - CORREÇÃO DE Z-INDEX */
+        /* TABS */
         .tabs { 
             display: flex;
             justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px;
             position: relative; z-index: 1000;
-            /* Garante que fica por cima de tudo */
         }
         .tab-btn { background: none;
             border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s;
         }
         .tab-btn:hover { color: #fff;
         }
-        
-        /* A classe active é apenas visual agora, a logica é feita via JS display */
         .tab-btn.active { color: #fff;
             border-bottom: 2px solid #eee; font-weight: bold; }
 
-        /* Conteúdo das abas */
         .tab-content { display: none;
             animation: fadeIn 0.5s; } 
         @keyframes fadeIn { from { opacity: 0;
             } to { opacity: 1; } }
 
         /* UI ELEMENTS */
-        input[type=file] { display: none;
+        
+        /* CORREÇÃO CRÍTICA: Substituímos display:none por uma técnica que mantém o input acessível */
+        input[type=file] { 
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+            opacity: 0; /* Invisível mas clicável pelo label */
         }
+
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px;
             cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s;
+            position: relative; z-index: 10; /* Garante que o botão fique clicável */
         }
         .custom-file-upload:hover { background-color: #333; border-color: #666;
         }
@@ -166,7 +175,6 @@
            
             <div id="tabGif" class="tab-content" style="display: block;"> <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
                 <label for="gifInput" class="custom-file-upload">Select GIF File</label>
-                
                 <input type="file" id="gifInput" accept="image/gif" onclick="this.value=null">
 
                 <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
@@ -190,7 +198,6 @@
             <div id="tabVideo" class="tab-content" style="display: none;"> <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
                 <label for="videoInput" class="custom-file-upload">1. Select Video 
                 (MP4)</label>
-                
                 <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg" onclick="this.value=null">
                 
                 <div class="controls-grid">
@@ -220,22 +227,17 @@
 
 <script>
     // ==========================================================
-    // 0. TAB LOGIC (DEFINED 
-    // FIRST FOR ROBUSTNESS)
+    // 0. TAB LOGIC
     // ==========================================================
     function switchTab(mode) {
-        // Pega elementos
         const tGif = document.getElementById('tabGif');
         const tVid = document.getElementById('tabVideo');
         const bGif = document.getElementById('tabBtnGif');
         const bVid = document.getElementById('tabBtnVideo');
 
-        // Reset visual das classes (para o sublinhado do botão)
         bGif.classList.remove('active');
-        
         bVid.classList.remove('active');
 
-        // Força bruta no display
         if (mode === 'gif') {
             tGif.style.display = 'block';
             tVid.style.display = 'none';
@@ -306,24 +308,26 @@
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
     let gifData = { cols: 4, rows: 4, fps: 15 };
+    
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
+        
+        // UI Reset immediate
         resetGifUiState();
         placeholderContainer.style.display = 'none';
         gifStatus.innerText = "Loading file...";
         gifProgressContainer.style.display = 'block';
         updateGifProgress(20, "Loading...");
+        
         const reader = new FileReader();
         reader.onload = function(event) {
-      
             updateGifProgress(50, "Parsing frames...");
             gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
             .then(function (frameData) {
                 updateGifProgress(80, "Drawing texture...");
                 setTimeout(() => { processGifData(frameData); }, 100);
             }).catch(err => {
-      
                 gifStatus.innerText = "Error parsing GIF: " + err;
                 gifProgressContainer.style.display = 'none';
                 placeholderContainer.style.display = 'block'; 
@@ -374,8 +378,12 @@
         outputCanvas.height = 0; outputCanvas.style.display = 'none'; 
         gifProgressBar.style.width = '0%'; gifProgressContainer.style.display = 'none';
     }
-    function resetGifTool() { resetGifUiState();
-        placeholderContainer.style.display = 'block'; gifStatus.innerText = "Waiting for file..."; gifInput.value = "";
+    
+    function resetGifTool() { 
+        resetGifUiState();
+        placeholderContainer.style.display = 'block'; 
+        gifStatus.innerText = "Waiting for file..."; 
+        gifInput.value = ""; // Garante limpeza via botão também
     }
 
     // ==========================================================
@@ -385,10 +393,16 @@
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const videoProgressContainer = document.getElementById('videoProgressContainer'), videoProgressBar = document.getElementById('videoProgressBar');
     let uploadedVideo = null;
+    
     videoInput.addEventListener('change', e => {
         uploadedVideo = e.target.files[0];
-        if (uploadedVideo) { videoStatus.innerText = "Video: " + uploadedVideo.name; convertVideoBtn.disabled = false; videoPreviewContainer.innerHTML = ""; }
+        if (uploadedVideo) { 
+            videoStatus.innerText = "Video: " + uploadedVideo.name; 
+            convertVideoBtn.disabled = false; 
+            videoPreviewContainer.innerHTML = ""; 
+        }
     });
+
     convertVideoBtn.addEventListener('click', () => {
         if (!uploadedVideo) return;
         convertVideoBtn.disabled = true; videoStatus.innerText = "Processing..."; videoPreviewContainer.innerHTML = "";
@@ -397,12 +411,10 @@
         const tempVideo = document.createElement('video'); tempVideo.src = URL.createObjectURL(uploadedVideo);
         tempVideo.onloadedmetadata = function() {
             let finalW, finalH;
-  
             if (resVal === "original") { finalW = this.videoWidth; finalH = this.videoHeight; }
             else { const dw = parseInt(resVal); finalW = dw; finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); }
             gifshot.createGIF({
                 video: [tempVideo.src], gifWidth: finalW, gifHeight: finalH, interval: 0.1, numFrames: 10 * dur, offset: start,
-          
                 progressCallback: p => { const pc = Math.round(p * 100);
                 videoProgressBar.style.width = pc + '%'; videoProgressBar.innerText = pc + '%';
                 }
@@ -426,6 +438,7 @@
             });
         };
     });
+
     function resetVideoTool() {
         videoPreviewContainer.innerHTML = "";
         videoStatus.innerText = "Waiting for video...";
