@@ -246,7 +246,7 @@
     const resSelect = document.getElementById('resSelect');
     const gridSelect = document.getElementById('gridSelect');
     const forceBg = document.getElementById('forceBg');
-    const safeBorder = document.getElementById('safeBorder'); // NOVO CONTROLE
+    const safeBorder = document.getElementById('safeBorder');
     const autoGridArea = document.getElementById('autoGridArea');
     const manualGridArea = document.getElementById('manualGridArea');
     const toggleCustomBtn = document.getElementById('toggleCustomBtn');
@@ -389,10 +389,17 @@
         const framesToRender = currentFrames.slice(0, safeUsedFrames);
         const count = framesToRender.length;
         
+        // --- FPS CONTROL (CORREÇÃO DE VELOCIDADE) ---
         let delay = currentFrames[0].frameInfo.delay || 10;
-        if (delay < 2) delay = 10; 
+        if (delay <= 0) delay = 10; // Corrige delays quebrados
+        
         let fps = Math.round(100 / delay);
-        if (fps > 20) fps = 15;
+
+        // FORÇA O FPS A SER LENTO (Máximo 15, ou 10)
+        // Isso resolve o problema do "Super Rápido"
+        if (fps > 15) {
+            fps = 15; 
+        }
         if (fps <= 0) fps = 10;
 
         outputCanvas.width = targetSize;
@@ -402,7 +409,7 @@
         ctx.imageSmoothingQuality = 'high';
         ctx.clearRect(0, 0, targetSize, targetSize);
 
-        // Fundo Preto
+        // Background
         if (forceBg.checked) {
             ctx.fillStyle = "#000000"; 
             ctx.fillRect(0, 0, targetSize, targetSize);
@@ -411,10 +418,10 @@
         const cellW = targetSize / grid.c;
         const cellH = targetSize / grid.r;
 
-        // PADDING CALCULATION (O segredo do espaçamento)
+        // PADDING (Espaçamento para evitar sangramento)
         let pad = 0;
         if (safeBorder.checked) {
-            pad = 2; // 2 pixels de encolhimento para criar borda de segurança
+            pad = 2; // 2 pixels de segurança
         }
 
         framesToRender.forEach((f, i) => {
@@ -422,7 +429,6 @@
             const y = Math.floor(i / grid.c) * cellH;
             const frameImg = f.getImage();
             
-            // Desenha com padding interno se a opção estiver marcada
             ctx.drawImage(
                 frameImg, 
                 0, 0, frameImg.width, frameImg.height, 
@@ -438,7 +444,6 @@
                 const x = (i % grid.c) * cellW;
                 const y = Math.floor(i / grid.c) * cellH;
                 
-                // Repete o último frame (com padding)
                 ctx.drawImage(
                     lastImg, 
                     0, 0, lastImg.width, lastImg.height, 
@@ -452,6 +457,7 @@
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
         
         let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
+        // Aqui o FPS agora será no máximo 15, garantindo que o script leia corretamente.
         let finalFileName = `${cleanName}.anim;${grid.c};${grid.r};${fps}.png`;
         
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Size: ${targetSize}px`;
