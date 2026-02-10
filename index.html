@@ -51,7 +51,7 @@
         .tab-content.active { display: block; } 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* INPUTS & BUTTONS */
+        /* UI ELEMENTS */
         input[type=file] { display: none; }
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
@@ -101,8 +101,8 @@
             </div>
 
             <div class="tabs">
-                <button id="tabBtnGif" class="tab-btn active">GIF to Texture</button>
-                <button id="tabBtnVideo" class="tab-btn">Video to GIF</button>
+                <button id="tabBtnGif" class="tab-btn active" onclick="switchTab('gif')">GIF to Texture</button>
+                <button id="tabBtnVideo" class="tab-btn" onclick="switchTab('video')">Video to GIF</button>
             </div>
 
             <div id="tabGif" class="tab-content active">
@@ -151,11 +151,10 @@
 
 <script>
     // ==========================================================
-    // SECURITY SYSTEM (PRODUCTION)
+    // 1. SECURITY SYSTEM
     // ==========================================================
-    
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
-    const LINK_EXPIRATION_MINUTES = 2; // Link valid for 2 minutes
+    const LINK_EXPIRATION_MINUTES = 2; 
 
     function checkAccess() {
         const params = new URLSearchParams(window.location.search);
@@ -164,20 +163,17 @@
         const timestamp = params.get('ts'); 
         const lockReason = document.getElementById('lockReason');
 
-        // 1. Check Parameters
         if (!userUUID || !urlToken || !timestamp) {
             lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
 
-        // 2. One-Time Use Check (Local)
         const storageKey = "used_token_" + urlToken;
         if (localStorage.getItem(storageKey)) {
              lockReason.innerText = "Error: This link has already been used. Please generate a new one.";
              return;
         }
 
-        // 3. Time Expiration Check
         const linkTime = parseInt(timestamp) * 1000;
         const now = new Date().getTime();
         const diffMinutes = (now - linkTime) / 1000 / 60;
@@ -187,7 +183,6 @@
             return;
         }
 
-        // 4. Hash Verification
         const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
         const calculatedToken = CryptoJS.MD5(stringToHash).toString();
 
@@ -199,34 +194,32 @@
             lockReason.innerText = "Error: Security Token Mismatch.";
         }
     }
-
     checkAccess();
 
     // ==========================================================
-    // TAB LOGIC (REFACTORED FOR STABILITY)
+    // 2. TAB LOGIC (Global Function for Robustness)
     // ==========================================================
-    
-    const tabBtnGif = document.getElementById('tabBtnGif');
-    const tabBtnVideo = document.getElementById('tabBtnVideo');
-    const tabGif = document.getElementById('tabGif');
-    const tabVideo = document.getElementById('tabVideo');
+    function switchTab(mode) {
+        const tabBtnGif = document.getElementById('tabBtnGif');
+        const tabBtnVideo = document.getElementById('tabBtnVideo');
+        const tabGif = document.getElementById('tabGif');
+        const tabVideo = document.getElementById('tabVideo');
 
-    tabBtnGif.addEventListener('click', () => {
-        tabGif.classList.add('active');
-        tabVideo.classList.remove('active');
-        tabBtnGif.classList.add('active');
-        tabBtnVideo.classList.remove('active');
-    });
-
-    tabBtnVideo.addEventListener('click', () => {
-        tabVideo.classList.add('active');
-        tabGif.classList.remove('active');
-        tabBtnVideo.classList.add('active');
-        tabBtnGif.classList.remove('active');
-    });
+        if (mode === 'gif') {
+            tabGif.classList.add('active');
+            tabVideo.classList.remove('active');
+            tabBtnGif.classList.add('active');
+            tabBtnVideo.classList.remove('active');
+        } else {
+            tabVideo.classList.add('active');
+            tabGif.classList.remove('active');
+            tabBtnVideo.classList.add('active');
+            tabBtnGif.classList.remove('active');
+        }
+    }
 
     // ==========================================================
-    // GIF TO TEXTURE LOGIC
+    // 3. GIF TOOL LOGIC
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -272,7 +265,6 @@
         const len = frames.length, cols = Math.ceil(Math.sqrt(len)), rows = Math.ceil(len / cols);
         const fps = frames[0].frameInfo.delay > 0 ? Math.round(100 / frames[0].frameInfo.delay) : 15;
         gifData = { cols, rows, fps };
-        
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
@@ -306,7 +298,7 @@
     function resetGifTool() { resetGifUiState(); placeholderContainer.style.display = 'block'; gifStatus.innerText = "Waiting for file..."; gifInput.value = ""; }
 
     // ==========================================================
-    // VIDEO TO GIF LOGIC
+    // 4. VIDEO TOOL LOGIC
     // ==========================================================
     const videoInput = document.getElementById('videoInput'), convertVideoBtn = document.getElementById('convertVideoBtn');
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
@@ -338,12 +330,29 @@
                     const img = document.createElement('img'); img.src = obj.image; videoPreviewContainer.appendChild(img);
                     const actions = document.createElement('div'); actions.className = 'result-actions';
                     const dl = document.createElement('a'); dl.href = obj.image; dl.download = "video.gif"; dl.innerText = "Download GIF"; dl.className = "download-link-btn";
-                    const rst = document.createElement('button'); rst.innerText = "Start Over"; rst.className = "action-btn"; rst.onclick = () => { videoPreviewContainer.innerHTML = ""; videoStatus.innerText = "Waiting..."; videoInput.value = ""; uploadedVideo = null; convertVideoBtn.disabled = true; };
+                    
+                    // FIXED: START OVER NOW CALLS THE PROPER RESET FUNCTION
+                    const rst = document.createElement('button'); 
+                    rst.innerText = "Start Over"; 
+                    rst.className = "action-btn"; 
+                    rst.onclick = function() { resetVideoTool(); };
+                    
                     actions.append(dl, rst); videoPreviewContainer.append(actions);
                 } else { videoStatus.innerText = "Error: " + obj.errorCode; convertVideoBtn.disabled = false; }
             });
         };
     });
+
+    // FULL RESET FUNCTION
+    function resetVideoTool() {
+        videoPreviewContainer.innerHTML = "";
+        videoStatus.innerText = "Waiting for video...";
+        videoInput.value = "";
+        uploadedVideo = null;
+        convertVideoBtn.disabled = true;
+        videoProgressContainer.style.display = 'none';
+        videoProgressBar.style.width = '0%';
+    }
 </script>
 </body>
 </html>
