@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator (High Quality)</title>
+    <title>MMC - SL Gif Creator (Auto)</title>
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTILO GERAL (MANTIDO) --- */
+        /* --- ESTILO GERAL --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -67,11 +67,11 @@
         .external-instructions h3 { margin-top: 0; color: #fff; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 20px; font-weight: 300; }
         .external-instructions ol { padding-left: 20px; line-height: 1.8; font-size: 0.95em; }
         .external-instructions li { margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-        .note { font-size: 0.85em; color: #555; margin-top: 25px; text-align: center; font-style: italic; }
         
-        /* Checkbox Otimização */
-        .checkbox-wrapper { margin: 15px 0; color: #ccc; font-size: 0.9em; }
-        .checkbox-wrapper input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+        /* BLOQUEIO */
+        #lockedScreen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; text-align: center; color: #d9534f; }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -101,13 +101,6 @@
                 <label for="gifInput" class="custom-file-upload">Select GIF File</label>
                 <input type="file" id="gifInput" accept="image/gif" onclick="this.value=null">
 
-                <div class="checkbox-wrapper">
-                    <label>
-                        <input type="checkbox" id="optimizeFrames" checked> 
-                        <strong>Reduce Frames (Recommended):</strong> Drops every 2nd frame for sharper quality.
-                    </label>
-                </div>
-
                 <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
                 <div id="gifStatus" class="status-msg">Waiting for file...</div>
         
@@ -132,8 +125,8 @@
                     <h3>Instructions</h3>
                     <ol>
                         <li>Upload video to EZGIF.</li>
-                        <li><strong>Important:</strong> Set Frame Rate to <strong>10</strong> (or lower).</li>
-                        <li><strong>Essential:</strong> Use the "Unoptimize" tool if transparency looks weird.</li>
+                        <li><strong>Important:</strong> Set Frame Rate to <strong>10</strong>.</li>
+                        <li>Use the "Unoptimize" tool if needed.</li>
                         <li>Download GIF and upload it here.</li>
                     </ol>
                 </div>
@@ -159,7 +152,6 @@
         const timestamp = params.get('ts'); 
         
         if (!userUUID || !urlToken || !timestamp) {
-            // Localhost bypass for testing
             if (window.location.protocol === 'file:') { 
                 document.getElementById('lockedScreen').style.display = 'none';
                 document.getElementById('appContent').style.display = 'flex';
@@ -186,7 +178,6 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
-    const optimizeCheckbox = document.getElementById('optimizeFrames');
     let gifData = { cols: 4, rows: 4, fps: 15 };
 
     gifInput.addEventListener('change', function(e) {
@@ -201,10 +192,10 @@
         
         const reader = new FileReader();
         reader.onload = function(event) {
-            // 'cumulative: true' CORRIGE O BUG DE TRANSPARÊNCIA
+            // 'cumulative: true' é ESSENCIAL para evitar bugs de textura
             gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas', cumulative: true })
             .then(function (frameData) {
-                updateGifProgress(60, "Building Texture...");
+                updateGifProgress(60, "Optimizing Grid...");
                 setTimeout(() => { processGifData(frameData); }, 100);
             }).catch(err => {
                 gifStatus.innerText = "Error: " + err;
@@ -219,27 +210,29 @@
         gifProgressBar.innerText = t;
     }
 
-    // --- FUNÇÃO INTELIGENTE DE GRADE ---
-    // Tenta encontrar a grade mais "quadrada" possível para aproveitar espaço
-    function calculateBestGrid(totalFrames) {
+    // --- ALGORITMO "TIGHTEST FIT" (IGUAL AO PROGRAMA .EXE) ---
+    // Encontra a grade que deixa MENOS espaços vazios
+    function calculateSmartGrid(totalFrames) {
         let bestCols = Math.ceil(Math.sqrt(totalFrames));
         let bestRows = Math.ceil(totalFrames / bestCols);
-        
-        // Tenta otimizar para evitar muitos buracos vazios
-        // Ex: 14 frames -> Sqrt é 4x4 (16 slots, 2 vazios). 
-        // Mas 7x2 = 14 slots (0 vazios). O .exe faz isso.
-        
-        // Verifica fatores simples
-        for (let r = 1; r <= Math.sqrt(totalFrames); r++) {
-            if (totalFrames % r === 0) {
-                let c = totalFrames / r;
-                // Prefere grades onde Colunas >= Linhas
-                if (c >= r) { 
-                    // Se a diferença de aspecto não for absurda, usa
-                    if (c / r < 4) {
-                        bestCols = c;
-                        bestRows = r;
-                    }
+        let minWasted = (bestCols * bestRows) - totalFrames;
+
+        // Testa combinações para achar a que desperdiça menos
+        // Ex: 13 frames -> 4x4 (16 slots, 3 perdidos) VS 7x2 (14 slots, 1 perdido)
+        // O loop vai preferir 7x2
+        for (let r = 1; r <= totalFrames; r++) {
+            let c = Math.ceil(totalFrames / r);
+            let waste = (c * r) - totalFrames;
+            
+            // Regras para manter a sanidade da textura (evitar 13x1 ou 1x13 se possível)
+            // Mas permitindo distorção se for eficiente
+            if (waste <= minWasted && c <= 16 && r <= 16) {
+                // Se o desperdício for menor, ou igual mas a grade for mais retangular (preferência do .exe)
+                // O .exe prefere preencher a largura
+                if (waste < minWasted || (waste === minWasted && c > bestCols)) {
+                    bestCols = c;
+                    bestRows = r;
+                    minWasted = waste;
                 }
             }
         }
@@ -249,49 +242,42 @@
     function processGifData(frames) {
         if (!frames.length) return;
 
-        // 1. OTIMIZAÇÃO (Remove frames pares se marcado)
-        if (optimizeCheckbox.checked && frames.length > 12) {
-            frames = frames.filter((_, i) => i % 2 === 0);
-        }
-
-        // 2. CALCULA MELHOR GRADE (Imita o .exe)
-        const grid = calculateBestGrid(frames.length);
+        // 1. CALCULA GRADE OTIMIZADA AUTOMÁTICA
+        const grid = calculateSmartGrid(frames.length);
         const cols = grid.cols;
         const rows = grid.rows;
 
-        // 3. RECUPERA FPS
+        // 2. RECUPERA FPS
         const delay = frames[0].frameInfo.delay;
         const fps = delay > 0 ? Math.round(100 / delay) : 10;
         
         gifData = { cols, rows, fps };
 
-        // 4. CONFIGURA CANVAS HD (1024x1024 FIXO)
-        // O segredo da qualidade: Usar sempre 1024 e esticar os frames para preencher
+        // 3. CANVAS HD (1024x1024)
         outputCanvas.width = 1024;
         outputCanvas.height = 1024;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         
-        // ALTA QUALIDADE DE REDIMENSIONAMENTO
+        // Alta qualidade de resize
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        
-        // Limpa
         ctx.clearRect(0, 0, 1024, 1024);
 
-        // Tamanho de CADA CÉLULA
+        // Tamanho exato de cada célula (Isso vai esticar a imagem, é o comportamento desejado!)
         const cellW = 1024 / cols;
         const cellH = 1024 / rows;
 
+        // 4. DESENHA E ESTICA
         frames.forEach((f, i) => {
             const x = (i % cols) * cellW;
             const y = Math.floor(i / cols) * cellH;
             
-            // O SEGREDO: ESTICAR (STRETCH) A IMAGEM PARA O TAMANHO DA CÉLULA
-            // Isso distorce no canvas, mas maximiza pixels. No SL fica perfeito.
+            // Desenha esticado para ocupar 100% da célula
             ctx.drawImage(f.getImage(), 0, 0, f.frameInfo.width, f.frameInfo.height, x, y, cellW, cellH);
         });
 
-        // Preenche buracos vazios com o último frame (Anti-Piscada)
+        // 5. PREENCHIMENTO AUTOMÁTICO (O tal "+1 frame")
+        // Se a grade tem 14 slots e o GIF tem 13, repete o último frame no slot 14.
         const totalSlots = cols * rows;
         if (totalSlots > frames.length) {
             const lastImg = frames[frames.length-1].getImage();
@@ -308,7 +294,6 @@
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
 
-        // INSTRUÇÕES PARA O USUÁRIO
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Frames: ${frames.length} | Grid: ${cols}x${rows}`;
         const suffix = `_${cols}_${rows}_${fps}`;
         
@@ -316,8 +301,8 @@
         gifInstruction.innerHTML = `
             File name format: <span class="file-name-style">YOURNAME${suffix}.png</span><br>
             <span style="font-size: 0.85em; color: #aaa;">
-            IMPORTANT: In Second Life, set your prim aspect ratio to match the original video.<br>
-            The texture looks distorted here but will look correct in SL.
+            NOTE: The texture looks distorted here (Stretched). This is normal.<br>
+            It will look perfect in Second Life when mapped to the prim.
             </span>
         `;
 
@@ -329,11 +314,8 @@
     }
 
     function downloadResized(size) {
-        // O Canvas já está em 1024x1024, então apenas baixamos
         const link = document.createElement('a');
         link.download = `MMC_GIF_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
-        
-        // High Quality PNG
         outputCanvas.toBlob(function(blob) {
             const url = URL.createObjectURL(blob);
             link.href = url;
