@@ -57,9 +57,10 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- INPUTS DE ARQUIVO (VISUALMENTE ESCONDIDOS MAS CLICÁVEIS) --- */
+        /* CORREÇÃO: Movido para fora da tela (left -9999px) para não cobrir outros botões */
         input[type=file] { 
-            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-            overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; 
+            position: absolute; left: -9999px; width: 1px; height: 1px; 
+            overflow: hidden; opacity: 0; 
         }
 
         .custom-file-upload { 
@@ -75,7 +76,7 @@
             border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; 
             text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s;
             display: inline-block; text-decoration: none; line-height: 1.2;
-            position: relative; z-index: 50; /* Garante que fiquem acima de tudo */
+            position: relative; z-index: 50; 
         }
         button.action-btn:hover:not(:disabled), .download-link-btn:hover { background-color: #fff; color: #000; }
         button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
@@ -97,14 +98,24 @@
         #placeholderContainer img { max-width: 150px; }
         
         /* --- RESULTADOS VIDEO --- */
-        .controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px; }
+        /* CORREÇÃO: Z-Index alto para garantir que inputs fiquem por cima de tudo */
+        .controls-grid { 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; 
+            text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px;
+            position: relative; z-index: 200; 
+        }
         .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
-        .control-group input, .control-group select { width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; }
+        
+        /* Inputs e Selects com cursor pointer explícito */
+        .control-group input, .control-group select { 
+            width: 90%; padding: 8px; background: #333; border: 1px solid #444; 
+            color: #fff; border-radius: 4px; cursor: pointer; position: relative; z-index: 201;
+        }
+        
         #videoPreviewContainer img { max-width: 100%; border: 1px solid #444; margin-top: 15px; }
         
         .result-actions { display: flex; justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
         
-        /* Ícone de sucesso para arquivos pesados */
         .heavy-file-icon { font-size: 50px; margin: 20px; color: #4CAF50; }
         .heavy-warning { color: #FFD700; font-size: 0.9em; margin-bottom: 10px; max-width: 500px; margin: 0 auto 10px auto; }
     </style>
@@ -439,7 +450,6 @@
                 finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); 
             }
 
-            // Otimização para arquivos pesados
             let interval = 0.1;
             if (finalW >= 1024 && dur > 5) {
                 interval = 0.15;
@@ -463,18 +473,11 @@
                 if (!obj.error) {
                     videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
                     
-                    // Converte Base64 para Blob imediatamente para liberar memória RAM da string
                     const imgBlob = dataURItoBlob(obj.image);
-                    
-                    // Limpa a string gigante da memória do navegador o mais rápido possível
                     obj.image = null; 
 
                     currentResultBlobUrl = URL.createObjectURL(imgBlob);
 
-                    // --- CORREÇÃO CRÍTICA DO TRAVAMENTO ---
-                    // Se o arquivo for muito grande (Original ou > 800px), NÃO EXIBE O PREVIEW.
-                    // Exibir um GIF Full HD trava o renderizador da aba.
-                    
                     if (resVal === "original" || finalW > 800) {
                         videoPreviewContainer.innerHTML = `
                             <div class="heavy-file-icon">✅</div>
@@ -486,7 +489,6 @@
                         videoPreviewContainer.appendChild(img);
                     }
 
-                    // Botões de ação
                     const actions = document.createElement('div'); 
                     actions.className = 'result-actions';
                     
@@ -527,6 +529,11 @@
         convertVideoBtn.disabled = true;
         videoProgressContainer.style.display = 'none';
         videoProgressBar.style.width = '0%';
+        
+        // CORREÇÃO: Força o desbloqueio de todos os inputs caso tenham travado
+        document.getElementById('resolution').disabled = false;
+        document.getElementById('startTime').disabled = false;
+        document.getElementById('duration').disabled = false;
     }
 </script>
 </body>
