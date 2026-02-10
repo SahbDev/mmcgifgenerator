@@ -129,13 +129,15 @@
                     </div>
 
                     <div class="control-group">
-                        <label>Frame Extraction Logic:</label>
-                        
-                        <label class="bg-option" title="Uncheck if frames look weird/ghostly. Unchecked = Raw C# Style">
-                            <input type="checkbox" id="cumulativeChkbox" checked> 
-                            Smart Frame Merging (Cumulative)
-                        </label>
+                        <label>Rendering Mode (Fix for "Difference"):</label>
+                        <select id="renderModeSelect" class="res-select" onchange="reprocessFile()">
+                            <option value="raw" selected>Raw (GDI+ Style) - Matches Original App</option>
+                            <option value="cumulative">Browser Default (Smoother)</option>
+                        </select>
+                    </div>
 
+                    <div class="control-group">
+                        <label>Options:</label>
                         <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
                             <input type="checkbox" id="transparentChkbox" checked> 
                             Transparency (PNG) 
@@ -210,7 +212,7 @@
     checkAccess();
 
     // ==========================================
-    // 2. GIF LOGIC (V12 - TOGGLE CUMULATIVE)
+    // 2. GIF LOGIC (GDI+ EMULATION MODE)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -221,7 +223,7 @@
     
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
-    const cumulativeChkbox = document.getElementById('cumulativeChkbox'); // NOVO
+    const renderModeSelect = document.getElementById('renderModeSelect'); // NOVO
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
@@ -233,17 +235,16 @@
     let finalFileName = "";
     let lastFile = null;
 
-    // Se mudar a opção "Cumulative", recarrega o GIF
-    cumulativeChkbox.addEventListener('change', function() {
-        if(lastFile) processFile(lastFile);
-    });
-
     gifInput.addEventListener('change', function(e) {
         if (e.target.files[0]) {
             lastFile = e.target.files[0];
             processFile(lastFile);
         }
     });
+
+    function reprocessFile() {
+        if(lastFile) processFile(lastFile);
+    }
 
     function processFile(file) {
         originalName = file.name.replace(/\.[^/.]+$/, "");
@@ -257,10 +258,10 @@
         gifProgressBar.style.width = '10%';
         gifResultsArea.style.display = 'none';
 
-        // LÓGICA DE EXTRAÇÃO: Verifica checkbox "Cumulative"
-        // true = Monta frames (Navegador)
-        // false = Frames Crus (C# GDI+)
-        let isCumulative = cumulativeChkbox.checked;
+        // MODO DE EXTRAÇÃO:
+        // cumulative: true -> Comportamento de Navegador (suave, montado)
+        // cumulative: false -> Comportamento GDI+ C# (bruto, isolado)
+        let isCumulative = (renderModeSelect.value === 'cumulative');
 
         gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: isCumulative })
         .then(function (frames) {
@@ -276,7 +277,7 @@
         });
     }
 
-    // CLONE DA LÓGICA DE GRADE C#
+    // LÓGICA DE GRADE C# (ORIGINAL)
     function calculateGridLogic() {
         let frameCount = currentFrames.length;
         let num = Math.round(Math.sqrt(frameCount)); 
@@ -306,43 +307,54 @@
         btnDownload.innerText = "Processing...";
 
         setTimeout(() => {
-            let tempImg = currentFrames[0].getImage();
-            let width = tempImg.width;
-            let height = tempImg.height;
+            // Pega dimensões do PRIMEIRO frame (Base)
+            // No modo RAW, frames seguintes podem ser menores (patches), mas o C# não lida com isso, 
+            // ele assume tamanho full. Se gif-frames entregar patch, precisamos desenhar offset.
+            let baseImg = currentFrames[0].getImage();
+            let width = baseImg.width;
+            let height = baseImg.height;
             
             canvas.width = xFrames * width;
             canvas.height = yFrames * height;
             let ctx = canvas.getContext('2d');
 
-            // --- LÓGICA DE DESENHO (C# CLONE) ---
             let num2 = currentFrames.length;
             if (num2 % 2 != 0) num2++; 
             let num3 = 0; 
 
             for (let i = 0; i < yFrames; i++) {
                 for (let j = 0; j < xFrames; j++) {
-                    let frameToDraw = null;
+                    let frameObj = null;
                     if (num3 < currentFrames.length) {
-                        frameToDraw = currentFrames[num3];
+                        frameObj = currentFrames[num3];
                     } else {
-                        frameToDraw = currentFrames[0]; // Padding
+                        frameObj = currentFrames[0]; // Padding
                     }
 
-                    if (frameToDraw) {
+                    if (frameObj) {
                         let posX = j * width;
                         let posY = i * height;
-                        ctx.drawImage(frameToDraw.getImage(), posX, posY);
+                        
+                        let imgData = frameObj.getImage();
+                        
+                        // CORREÇÃO DE OFFSET PARA MODO RAW
+                        // Se estivermos em modo Raw, gif-frames pode retornar apenas o "patch" que mudou.
+                        // Precisamos desenhar no lugar certo usando frameInfo.x e y.
+                        let offX = frameObj.frameInfo.x || 0;
+                        let offY = frameObj.frameInfo.y || 0;
+
+                        ctx.drawImage(imgData, posX + offX, posY + offY);
                     }
                     num3++;
                 }
             }
 
-            // --- REDIMENSIONAMENTO (ASPECT RATIO PRESERVED - C# LOGIC) ---
+            // --- REDIMENSIONAMENTO (C# LOGIC: NO DISTORTION) ---
             let targetMax = parseInt(resSelect.value); 
             let fullW = canvas.width;
             let fullH = canvas.height;
 
-            // Se for maior que o target (1024 ou 2048), reduz. Senão, mantém.
+            // Se for maior, reduz para o limite. Se for menor, MANTÉM.
             let finalW = (fullW > targetMax) ? targetMax : fullW;
             let finalH = (fullH > targetMax) ? targetMax : fullH;
             
