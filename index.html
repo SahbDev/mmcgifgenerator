@@ -16,17 +16,22 @@
             text-align: center; 
             padding: 20px; 
             margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .main-container { 
+            width: 100%;
             max-width: 900px; 
-            margin: 0 auto; 
             background: #1a1a1a; 
             padding: 30px; 
             border-radius: 8px; 
             border: 1px solid #333;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
             min-height: 600px;
+            margin-bottom: 40px; 
         }
 
         h1 { 
@@ -35,7 +40,31 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             color: #fff;
-            padding-bottom: 20px;
+            margin-bottom: 10px; 
+            padding-bottom: 0;
+        }
+
+        /* --- HEADER CREDITS STYLE --- */
+        .header-credits {
+            font-size: 0.75em;
+            color: #666;
+            margin-bottom: 30px; 
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+        }
+        /* Style for the "Buy here" link */
+        .header-credits a {
+            color: #fff; /* WHITE color for highlight */
+            font-weight: bold;
+            text-decoration: none;
+            border-bottom: 1px dotted #fff;
+            transition: all 0.2s;
+            margin-left: 3px;
+        }
+        .header-credits a:hover {
+            color: #ccc;
+            border-bottom: 1px solid #ccc;
         }
 
         /* --- TABS NAVIGATION --- */
@@ -103,7 +132,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: all 0.3s;
-            width: 240px; /* FIXED WIDTH */
+            width: 240px; 
             margin: 10px;
         }
 
@@ -150,7 +179,7 @@
             max-width: 600px;
         }
         
-        /* Canvas Styles - Transparency checkerboard */
+        /* Canvas Styles */
         canvas { 
             max-width: 100%; 
             border: 1px solid #333; 
@@ -163,10 +192,9 @@
         
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
         
-        /* Placeholder Style - FIXED COLOR ISSUE */
+        /* Placeholder Style */
         #placeholderContainer {
             margin-top: 30px;
-            /* opacity: 0.7;  <-- REMOVED THIS LINE */
             transition: 0.3s;
         }
         #placeholderContainer img {
@@ -216,6 +244,10 @@
 
 <div class="main-container">
     <h1>MMC - SL Gif Creator</h1>
+    
+    <div class="header-credits">
+        MMC - Secondlife gif generator created by Saori Suki. You need the script to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
+    </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
@@ -223,7 +255,7 @@
     </div>
 
     <div id="tabGif" class="tab-content active">
-        <p style="color: #666;">Convert animated GIFs to SL Texture Atlas.</p>
+        <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
 
         <label for="gifInput" class="custom-file-upload">Select GIF File</label>
         <input type="file" id="gifInput" accept="image/gif">
