@@ -9,331 +9,208 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- CORE THEME --- */
-        :root {
-            --bg-dark: #121212;
-            --panel-bg: #1e1e1e;
-            --input-bg: #2a2a2a;
-            --accent-color: #4a90e2;
-            --accent-hover: #357abd;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --border-radius: 12px;
-            --border-color: #333;
-        }
-
+        /* --- ESTÉTICA CLÁSSICA (A QUE VOCÊ GOSTA) --- */
         body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark); 
-            color: var(--text-main); 
-            margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; padding: 40px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111; color: #eee; text-align: center; 
+            padding: 20px; margin: 0; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- TELA DE BLOQUEIO --- */
+        /* TELA DE BLOQUEIO */
         #lockedScreen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 80vh; text-align: center; color: #ff5252;
+            height: 80vh; text-align: center; color: #d9534f;
         }
-        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #lockedScreen h2 { font-size: 2.5em; margin-bottom: 10px; letter-spacing: 2px; font-weight: 700; }
-        #lockedScreen p { color: var(--text-muted); font-size: 1.1em; }
-        #lockReason { font-size: 0.9em; margin-top: 20px; opacity: 0.7; font-family: monospace; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 4px; }
+        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; border-radius: 5px; }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
+        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; border: 1px solid #333; padding: 10px; background: #1a1a1a; }
 
-        /* --- CONTAINER PRINCIPAL --- */
+        /* APP CONTAINER */
         #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
-            width: 100%; max-width: 850px; 
-            background: var(--panel-bg); 
-            padding: 40px; 
-            border-radius: var(--border-radius); 
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
+            width: 100%; max-width: 900px; background: #1a1a1a; 
+            padding: 30px; border-radius: 8px; border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 500px;
             margin-bottom: 40px; 
         }
 
-        h1 { margin: 0 0 10px 0; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; color: #fff; font-size: 2rem; }
+        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
         
-        .header-credits { font-size: 0.9em; color: var(--text-muted); margin-bottom: 40px; letter-spacing: 0.5px; }
-        .header-credits a { color: var(--accent-color); font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; transition: 0.3s; }
-        .header-credits a:hover { border-color: var(--accent-color); }
+        .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
+        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
+        .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
 
-        /* --- UPLOAD AREA --- */
-        .upload-area {
-            position: relative;
-            margin-bottom: 30px;
-        }
-        
-        input[type=file] { display: none; }
-        
-        .custom-file-upload { 
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 16px 32px; 
-            background: linear-gradient(135deg, #333 0%, #222 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 50px; 
-            color: #fff; 
-            font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;
-            cursor: pointer; transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .custom-file-upload:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            border-color: #555;
-            background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
-        }
-        .custom-file-upload i { margin-right: 10px; font-style: normal; font-size: 1.2em; }
+        /* INPUTS */
+        input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 15px 30px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        /* --- PREVIEW & CANVAS --- */
-        #placeholderContainer { margin-top: 30px; min-height: 150px; display: flex; justify-content: center; align-items: center; } 
-        #placeholderContainer img { 
-            max-width: 180px; border-radius: 8px; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border: 1px solid #333;
+        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
+        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
+        button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
+
+        /* PAINEL DE CONTROLE (O CINZA CLÁSSICO) */
+        .controls-panel {
+            background: #222; border: 1px solid #444; border-radius: 6px;
+            padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
+        }
+
+        .controls-row {
+            display: flex; justify-content: center; gap: 20px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap;
         }
         
-        canvas { display: none; } /* Canvas oculto para processamento */
-
-        /* --- PROGRESS BAR --- */
-        .progress-container { width: 100%; max-width: 400px; background-color: #333; border-radius: 20px; margin: 20px auto; height: 10px; overflow: hidden; display: none; }
-        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-color), #64b5f6); transition: width 0.4s ease; border-radius: 20px; }
-        .status-msg { margin: 15px 0; color: var(--text-muted); font-size: 0.9em; min-height: 20px; font-weight: 500; }
-
-        /* --- CONTROLS PANEL (Redesenhado) --- */
-        #gifResultsArea { display: none; margin-top: 30px; animation: fadeIn 0.5s ease; }
-        
-        .controls-card {
-            background: #252525;
-            border: 1px solid #333;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            margin-bottom: 25px;
-            text-align: left;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        .control-group label {
-            display: block;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .select-wrapper {
-            position: relative;
-        }
+        .control-group { text-align: left; display: flex; flex-direction: column; }
+        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; }
         
         .res-select {
-            width: 100%;
-            padding: 12px 15px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 0.95rem;
-            cursor: pointer;
-            appearance: none;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .res-select:focus { border-color: var(--accent-color); }
-        
-        /* Setinha customizada do select */
-        .select-wrapper::after {
-            content: '▼';
-            font-size: 0.7em;
-            color: #666;
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
+            background-color: #333; color: #fff; padding: 8px; 
+            border: 1px solid #555; border-radius: 4px; 
+            font-size: 13px; cursor: pointer; width: 240px;
         }
 
-        /* Checkbox bonito */
-        .checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            background: var(--input-bg);
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .checkbox-wrapper:hover { border-color: #555; }
-        .checkbox-wrapper input { margin-right: 12px; accent-color: var(--accent-color); transform: scale(1.2); cursor: pointer; }
-        .checkbox-text { font-size: 0.9rem; color: #fff; }
-        .checkbox-sub { font-size: 0.75rem; color: #777; margin-left: auto; }
+        /* CHECKBOX CLÁSSICO */
+        .bg-option { display: flex; align-items: center; margin-top: 5px; font-size: 0.85em; color: #bbb; cursor: pointer; }
+        .bg-option input { margin-right: 8px; cursor: pointer; }
 
-        /* Grid Info Display */
-        .grid-info-box {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            color: #81c784;
-            padding: 12px;
-            border-radius: 8px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-top: 5px;
+        /* MODO MANUAL TOGGLE */
+        .toggle-btn {
+            background: #333; border: 1px solid #666; color: #fff;
+            padding: 5px 15px; font-size: 0.8em; cursor: pointer; border-radius: 20px;
+            transition: 0.3s; margin-left: 10px;
         }
+        .toggle-btn:hover { background: #555; }
+        .toggle-btn.active { background: #4a90e2; border-color: #4a90e2; }
 
-        /* --- FILE CARD (Nome e Aviso) --- */
-        .file-card {
-            background: #2a2a2a;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            border-left: 4px solid var(--accent-color);
-            margin-bottom: 25px;
-            text-align: left;
+        .custom-inputs { display: none; align-items: center; gap: 10px; }
+        .small-input {
+            width: 50px; background: #111; border: 1px solid #555; color: #fff;
+            padding: 8px; text-align: center; border-radius: 4px; font-weight: bold;
         }
         
-        .filename-label {
-            font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
-        }
+        .grid-info { font-size: 0.85em; color: #888; margin-top: 5px; font-family: monospace; }
+        .warn-text { color: #e6b800; }
+        .good-text { color: #4CAF50; }
+
+        /* PREVIEW E RESULTADOS */
+        #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
+        #placeholderContainer img { max-width: 150px; border: 1px solid #333; }
+        
+        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background: transparent; }
+        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; flex-direction: column; align-items: center; }
+        
+        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
+        .highlight-success { color: #eee; font-weight: bold; } 
+        
+        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
+        
         .filename-display {
-            font-family: 'Consolas', monospace; font-size: 1rem; color: #fff; word-break: break-all; margin-bottom: 15px;
+            font-family: monospace; color: #aaa; background: #222;
+            padding: 8px 15px; border-radius: 4px; border: 1px solid #444;
+            margin-bottom: 5px; font-size: 0.9em;
         }
-        .warning-box {
-            display: flex; align-items: flex-start; gap: 10px;
-            font-size: 0.85rem; color: #ffab40; line-height: 1.4;
-            background: rgba(255, 171, 64, 0.1); padding: 10px; border-radius: 6px;
+        
+        .filename-warning {
+            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em;
         }
-
-        /* --- BUTTONS --- */
-        .actions-row {
-            display: flex; gap: 15px; justify-content: center;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 15px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        #btnDownload {
-            background: var(--accent-color);
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
-        }
-        #btnDownload:hover { background: var(--accent-hover); transform: translateY(-2px); }
-        #btnDownload:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
-
-        .btn-secondary {
-            background: transparent;
-            color: #888;
-            border: 1px solid #444;
-            max-width: 150px;
-        }
-        .btn-secondary:hover { color: #fff; border-color: #fff; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div id="lockedScreen">
         <img src="ERROR.gif" alt="Access Denied" class="lock-screen-gif">
-        <h2>ACCESS DENIED</h2>
+        <h2>Access Denied</h2>
         <p>You need to use your in-world HUD to generate your access link.</p>
         <div id="lockReason">Checking security...</div>
     </div>
 
     <div id="appContent">
         <div class="main-container">
-            <h1>MMC GIF CREATOR</h1>
+            <h1>MMC - SL Gif Creator</h1>
+  
             <div class="header-credits">
-                Create High-Quality Textures for Second Life. 
-                <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Get the Script.</a>
+                Created by Saori Suki. You need the script for the gif to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
             </div>
 
-            <div class="upload-area">
-                <label for="gifInput" class="custom-file-upload">
-                    <i style="font-style:normal;">📂</i> Select GIF File
-                </label>
-                <input type="file" id="gifInput" accept="image/gif">
-            </div>
+            <p style="color: #666;">Convert your GIF to TEXTURE below.</p>
+            
+            <label for="gifInput" class="custom-file-upload">Select GIF File</label>
+            <input type="file" id="gifInput" accept="image/gif">
 
             <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar"></div></div>
             <div id="gifStatus" class="status-msg">Waiting for file...</div>
     
             <div id="placeholderContainer">
-                <img id="previewImg" src="bobonchik-spin-sp.gif" alt="Preview">
+                <img id="previewImg" src="bobonchik-spin-sp.gif" alt="Welcome">
             </div>
             
             <canvas id="outputCanvas"></canvas>
             
             <div id="gifResultsArea">
                 
-                <div class="controls-card">
-                    <div class="controls-grid">
-                        
+                <div class="controls-panel">
+                    
+                    <div class="controls-row">
                         <div class="control-group">
-                            <label>Texture Quality / Cost</label>
-                            <div class="select-wrapper">
-                                <select id="resSelect" class="res-select">
-                                    <option value="1024" selected>1024px (Standard) — 10L$ Upload</option>
-                                    <option value="2048">2048px (Ultra High) — 50L$ Upload</option>
-                                </select>
+                            <label>Texture Quality / Cost:</label>
+                            <select id="resSelect" class="res-select">
+                                <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
+                                <option value="2048">2048px (High + Sharpen) 50L$ Upload</option>
+                            </select>
+                            
+                            <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
+                                <input type="checkbox" id="transparentChkbox" checked> 
+                                Transparency (PNG)
+                            </label>
+                            <div style="font-size: 0.7em; color:#666; margin-left: 24px;">Uncheck to fix ghosting.</div>
+                        </div>
+                        
+                        <div class="control-group" style="justify-content: flex-end;">
+                            <button id="toggleCustomBtn" class="toggle-btn" onclick="toggleCustomMode()">✎ Edit Grid Manually</button>
+                        </div>
+                    </div>
+
+                    <div class="controls-row">
+                        
+                        <div id="autoGridArea" class="control-group">
+                            <label>Smart Grid Suggestions (Clone Logic):</label>
+                            <div id="gridInfoDisplay" style="font-family: monospace; color: #4CAF50; margin-top: 5px;">Waiting...</div>
+                        </div>
+
+                        <div id="manualGridArea" class="control-group custom-inputs">
+                            <div>
+                                <label>Cols:</label>
+                                <input type="number" id="customCols" class="small-input" value="4" min="1" onchange="manualGridUpdate()">
+                            </div>
+                            <div style="padding-top: 15px; color:#666;">x</div>
+                            <div>
+                                <label>Rows:</label>
+                                <input type="number" id="customRows" class="small-input" value="4" min="1" onchange="manualGridUpdate()">
                             </div>
                         </div>
-
-                        <div class="control-group">
-                            <label>Options</label>
-                            <label class="checkbox-wrapper" title="Keeps transparency. Uncheck to fix ghosting.">
-                                <input type="checkbox" id="transparentChkbox" checked>
-                                <span class="checkbox-text">Transparency (PNG)</span>
-                                <span class="checkbox-sub">Uncheck to Fix Ghosting</span>
-                            </label>
-                        </div>
-
-                        <div class="control-group">
-                            <label>Auto-Calculated Grid</label>
-                            <div id="gridInfoDisplay" class="grid-info-box">Waiting...</div>
-                        </div>
-
                     </div>
+
                 </div>
 
-                <div class="file-card">
-                    <div class="filename-label">Generated Filename</div>
-                    <div id="fileNameDisplay" class="filename-display">...</div>
-                    <div class="warning-box">
-                        <span>⚠️</span>
-                        <span><b>IMPORTANT:</b> Do not rename the numbers at the end of the file. <br>The script needs them to animate correctly.</span>
-                    </div>
+                <div id="fileNameDisplay" class="filename-display">...</div>
+                
+                <div class="filename-warning">
+                    ⚠️ <b>IMPORTANT:</b> Do not rename your texture after the ".anim;...".<br>
+                    This part is required for the script to work properly.
                 </div>
 
-                <div class="actions-row">
-                    <button id="btnDownload" class="action-btn" disabled>Download Texture</button>
-                    <button class="action-btn btn-secondary" onclick="location.reload()">Start Over</button>
-                </div>
-
+                <button id="btnDownload" class="action-btn" disabled>Download Texture</button>
+                <button class="action-btn" onclick="location.reload()" style="background: #222; width: 150px; margin-top: 5px;">Start Over</button>
             </div>
         </div>
     </div>
 
 <script>
     // ==========================================
-    // 1. SECURITY (MMC STANDARD)
+    // 1. SEGURANÇA (MMC STANDARD)
     // ==========================================
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
     const LINK_EXPIRATION_MINUTES = 2; 
@@ -350,20 +227,20 @@
 
         if (!userUUID || !urlToken || !timestamp) {
             lockReason.innerText = "Error: Invalid Link Format.";
-            return; // Bloqueado
+            return; 
         }
 
         const storageKey = "used_token_" + urlToken;
         if (localStorage.getItem(storageKey)) {
              lockReason.innerText = "Error: Link already used.";
-             return; // Bloqueado
+             return; 
         }
 
         const linkTime = parseInt(timestamp) * 1000;
         const now = new Date().getTime();
         if ((now - linkTime) / 1000 / 60 > LINK_EXPIRATION_MINUTES) {
             lockReason.innerText = "Error: Link Expired.";
-            return; // Bloqueado
+            return; 
         }
 
         const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
@@ -377,10 +254,10 @@
             lockReason.innerText = "Error: Security Token Mismatch.";
         }
     }
-    checkAccess(); // Inicia verificação
+    checkAccess();
 
     // ==========================================
-    // 2. GIF LOGIC (CLONE G2SLA)
+    // 2. LÓGICA DO GIF CREATOR (CLONE + SHARPEN)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -388,18 +265,26 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const gifResultsArea = document.getElementById('gifResultsArea');
+    
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
+    
+    const autoGridArea = document.getElementById('autoGridArea');
+    const manualGridArea = document.getElementById('manualGridArea');
+    const toggleCustomBtn = document.getElementById('toggleCustomBtn');
+    const customCols = document.getElementById('customCols');
+    const customRows = document.getElementById('customRows');
 
     let currentFrames = [];
     let xFrames = 0;
     let yFrames = 0;
     let originalName = "";
     let finalFileName = "";
+    let isCustomMode = false;
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -421,16 +306,44 @@
         gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: true })
         .then(function (frames) {
             currentFrames = frames;
-            calculateGridLogic(); 
+            calculateGridLogic(); // Auto Calc
             
             gifStatus.innerText = "Ready to Convert!";
             gifProgressBar.style.width = '100%';
             setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
             
-            gifResultsArea.style.display = 'block';
+            gifResultsArea.style.display = 'flex';
             btnDownload.disabled = false;
         });
     });
+
+    // MODO MANUAL TOGGLE
+    function toggleCustomMode() {
+        isCustomMode = !isCustomMode;
+        if (isCustomMode) {
+            autoGridArea.style.display = 'none';
+            manualGridArea.style.display = 'flex';
+            toggleCustomBtn.innerText = "← Back to Auto";
+            toggleCustomBtn.classList.add("active");
+            
+            // Popula inputs com o cálculo atual
+            customCols.value = xFrames;
+            customRows.value = yFrames;
+        } else {
+            autoGridArea.style.display = 'block';
+            manualGridArea.style.display = 'none';
+            toggleCustomBtn.innerText = "✎ Edit Grid Manually";
+            toggleCustomBtn.classList.remove("active");
+            calculateGridLogic(); // Recalcula auto
+        }
+        updateFileName();
+    }
+
+    function manualGridUpdate() {
+        xFrames = parseInt(customCols.value) || 1;
+        yFrames = parseInt(customRows.value) || 1;
+        updateFileName();
+    }
 
     // LÓGICA MATEMÁTICA DO PROGRAMA ORIGINAL (C#)
     function calculateGridLogic() {
@@ -449,11 +362,54 @@
             else { xFrames = Math.floor(num2 / 16); yFrames = 16; }
         }
 
-        gridInfoDisplay.innerText = `${xFrames} COLS x ${yFrames} ROWS (${frameCount} FRAMES)`;
-        
+        gridInfoDisplay.innerText = `${xFrames} cols x ${yFrames} rows (${frameCount} frames)`;
+        updateFileName();
+    }
+
+    function updateFileName() {
         let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
+        // SEMPRE 10 FPS (Clone perfeito)
         finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
         fileNameDisplay.innerText = finalFileName;
+    }
+
+    // ALGORITMO DE NITIDEZ (SHARPEN) PARA 2048px
+    function applySharpen(ctx, w, h, mix) {
+        const weights = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+        const katet = Math.round(Math.sqrt(weights.length));
+        const half = (katet * 0.5) | 0;
+        const dstData = ctx.createImageData(w, h);
+        const dstBuff = dstData.data;
+        const srcData = ctx.getImageData(0, 0, w, h);
+        const srcBuff = srcData.data;
+        const y = h; const x = w;
+        
+        for (let i = 0; i < y; i++) {
+            for (let j = 0; j < x; j++) {
+                const sy = i; const sx = j;
+                const dstOff = (i * x + j) * 4;
+                let r = 0, g = 0, b = 0;
+                
+                for (let cy = 0; cy < katet; cy++) {
+                    for (let cx = 0; cx < katet; cx++) {
+                        const scy = sy + cy - half;
+                        const scx = sx + cx - half;
+                        if (scy >= 0 && scy < y && scx >= 0 && scx < x) {
+                            const srcOff = (scy * x + scx) * 4;
+                            const wt = weights[cy * katet + cx];
+                            r += srcBuff[srcOff] * wt;
+                            g += srcBuff[srcOff + 1] * wt;
+                            b += srcBuff[srcOff + 2] * wt;
+                        }
+                    }
+                }
+                dstBuff[dstOff] = Math.min(255, Math.max(0, r));
+                dstBuff[dstOff + 1] = Math.min(255, Math.max(0, g));
+                dstBuff[dstOff + 2] = Math.min(255, Math.max(0, b));
+                dstBuff[dstOff + 3] = srcBuff[dstOff + 3];
+            }
+        }
+        ctx.putImageData(dstData, 0, 0);
     }
 
     btnDownload.onclick = function() {
@@ -472,6 +428,7 @@
             canvas.height = yFrames * height;
             let ctx = canvas.getContext('2d');
 
+            // --- LÓGICA DE DESENHO (C# CLONE) ---
             let num2 = currentFrames.length;
             if (num2 % 2 != 0) num2++; 
             let num3 = 0; 
@@ -482,7 +439,7 @@
                     if (num3 < currentFrames.length) {
                         frameToDraw = currentFrames[num3];
                     } else {
-                        frameToDraw = currentFrames[0]; // Padding
+                        frameToDraw = currentFrames[0]; // Padding com frame 0
                     }
 
                     if (frameToDraw) {
@@ -494,20 +451,30 @@
                 }
             }
 
-            // Resize Logic
+            // --- RESIZE & SHARPEN ---
             let targetMax = parseInt(resSelect.value); 
-            if (canvas.width > targetMax || canvas.height > targetMax) {
+            
+            if (canvas.width > targetMax || canvas.height > targetMax || targetMax === 2048) {
                 let tempCanvas = document.createElement('canvas');
                 let tCtx = tempCanvas.getContext('2d');
-                let num6 = (canvas.width > targetMax) ? targetMax : canvas.width;
-                let num7 = (canvas.height > targetMax) ? targetMax : canvas.height;
+                let num6 = targetMax; let num7 = targetMax;
                 
                 tempCanvas.width = num6; tempCanvas.height = num7;
+                tCtx.imageSmoothingEnabled = true;
+                tCtx.imageSmoothingQuality = 'high';
                 tCtx.drawImage(canvas, 0, 0, num6, num7);
+                
+                // Aplica Sharpen SE for 2048
+                if (targetMax === 2048) {
+                    gifStatus.innerText = "Applying Sharpen Filter...";
+                    applySharpen(tCtx, num6, num7, 1.0);
+                }
+
                 canvas.width = num6; canvas.height = num7;
                 ctx.drawImage(tempCanvas, 0, 0);
             }
 
+            // --- SALVAMENTO ---
             const link = document.createElement('a');
             link.download = finalFileName;
 
@@ -520,7 +487,7 @@
                 cCtx.fillStyle = "#000000";
                 cCtx.fillRect(0, 0, canvas.width, canvas.height);
                 cCtx.drawImage(canvas, 0, 0);
-                link.href = compositeCanvas.toDataURL("image/jpeg", 0.9);
+                link.href = compositeCanvas.toDataURL("image/jpeg", 0.95);
                 link.download += ".jpg";
             } else {
                 // PNG (Transparente)
@@ -530,7 +497,7 @@
 
             link.click();
             
-            gifStatus.innerHTML = `<span style="color:#4CAF50">✔ Texture Downloaded Successfully!</span>`;
+            gifStatus.innerHTML = `<span class="highlight-success">✔ Texture Downloaded!</span>`;
             btnDownload.innerText = "Download Texture";
             btnDownload.disabled = false;
         }, 100);
