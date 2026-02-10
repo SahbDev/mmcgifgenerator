@@ -3,65 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator (Clone Edition)</title>
+    <title>MMC - SL Gif Creator</title>
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
+        /* --- ESTILO MODERNO (MMC IDENTITY) --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0; color: #333; text-align: center; 
+            background-color: #111; color: #eee; text-align: center; 
             padding: 20px; margin: 0; min-height: 100vh;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- VISUAL ESTILO WINDOWS FORMS (Retrô) --- */
-        .main-container { 
-            width: 300px; background: #e6e6e6; 
-            padding: 15px; border: 1px solid #999;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            text-align: left; font-size: 11px;
-        }
-
-        h1 { font-size: 14px; margin: 0 0 10px 0; color: #000; text-align: center; }
-        
-        .preview-box {
-            width: 100px; height: 100px; border: 1px solid #999;
-            background: #fff; display: inline-block; vertical-align: top;
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-        }
-        .preview-box img { max-width: 100px; max-height: 100px; }
-
-        .controls-right { display: inline-block; vertical-align: top; margin-left: 10px; width: 150px; }
-
-        button {
-            width: 100px; height: 25px; margin-bottom: 5px;
-            background: #e1e1e1; border: 1px solid #adadad; cursor: pointer;
-            font-size: 11px; color: #000;
-        }
-        button:hover { background: #e5f1fb; border-color: #0078d7; }
-        button:disabled { color: #888; background: #f0f0f0; border-color: #ccc; }
-
-        .status-lbl { color: #666; margin-bottom: 10px; display: block; }
-        .info-lbl { margin-top: 5px; display: block; }
-
-        input[type=checkbox] { margin-right: 5px; vertical-align: middle; }
-        
-        /* Ocultar input file */
-        input[type=file] { display: none; }
-
-        /* --- TELA DE BLOQUEIO --- */
+        /* TELA DE BLOQUEIO */
         #lockedScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; z-index: 999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: #d9534f;
+            height: 80vh; text-align: center; color: #d9534f;
         }
         .lock-screen-gif { max-width: 150px; margin-bottom: 20px; border-radius: 5px; }
-        #appContent { display: none; }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
+        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; border: 1px solid #333; padding: 10px; background: #1a1a1a; }
+
+        /* CONTEÚDO PRINCIPAL */
+        #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+        .main-container { 
+            width: 100%; max-width: 900px; background: #1a1a1a; 
+            padding: 30px; border-radius: 8px; border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 500px;
+            margin-bottom: 40px; 
+        }
+
+        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
         
-        /* Canvas Oculto */
+        .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
+        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
+        .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
+
+        /* INPUTS E BOTÕES */
+        input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 15px 30px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .custom-file-upload:hover { background-color: #333; border-color: #666; }
+
+        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
+        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
+        button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
+
+        /* PAINEL DE CONTROLE */
+        .controls-panel {
+            background: #222; border: 1px solid #444; border-radius: 6px;
+            padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
+        }
+        .control-group { margin-bottom: 15px; text-align: left; }
+        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; display: block; }
+        
+        .res-select {
+            background-color: #333; color: #fff; padding: 8px; 
+            border: 1px solid #555; border-radius: 4px; 
+            font-size: 13px; cursor: pointer; width: 100%;
+        }
+
+        .checkbox-container { display: flex; align-items: center; font-size: 0.9em; color: #ccc; cursor: pointer; margin-top: 10px; }
+        .checkbox-container input { margin-right: 10px; }
+
+        /* PREVIEW AREA */
+        #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
+        #placeholderContainer img { max-width: 200px; border-radius: 4px; border: 1px solid #444; }
+        
+        /* STATUS E BARRA */
+        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
+        .highlight-success { color: #4CAF50; font-weight: bold; } 
+        
+        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
+        
+        /* RESULTADOS */
+        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; flex-direction: column; align-items: center; }
+        .filename-display { font-family: monospace; color: #aaa; background: #222; padding: 8px 15px; border-radius: 4px; border: 1px solid #444; margin-bottom: 5px; font-size: 0.9em; }
+        .filename-warning { font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em; }
+        
+        /* CANVAS INVISÍVEL (PROCESSAMENTO) */
         canvas { display: none; }
     </style>
 </head>
@@ -69,52 +93,75 @@
 
     <div id="lockedScreen">
         <img src="ERROR.gif" alt="Access Denied" class="lock-screen-gif">
-        <h2 style="color: #d9534f; font-size: 2em; text-transform: uppercase;">Access Denied</h2>
-        <p style="color: #888;">You need to use your in-world HUD to generate your access link.</p>
-        <div id="lockReason" style="color: #666; font-family: monospace; margin-top: 10px;">Checking security...</div>
+        <h2>Access Denied</h2>
+        <p>You need to use your in-world HUD to generate your access link.</p>
+        <div id="lockReason">Checking security...</div>
     </div>
 
-    <div id="appContent">
+    <div id="appContent" style="display: none;">
         <div class="main-container">
-            <h1>G2SLA Clone (Web)</h1>
+            <h1>MMC - SL Gif Creator</h1>
+  
+            <div class="header-credits">
+                Created by Saori Suki. You need the script for the gif to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
+            </div>
+
+            <p style="color: #666;">Convert your GIF to TEXTURE below.</p>
             
-            <div class="preview-box">
-                <img id="previewImg" src="" alt="" style="display:none;">
-                <span id="noImageLbl" style="color:#888;">No Image</span>
-            </div>
-
-            <div class="controls-right">
-                <button onclick="document.getElementById('gifInput').click()">Load GIF</button>
-                <span id="loadStatusLbl" class="status-lbl">No Image Loaded</span>
-                
-                <button id="outputBtn" disabled onclick="generateOutput()">Output</button>
-                
-                <div style="margin-top: 10px;">
-                    <label>
-                        <input type="checkbox" id="transparentChkbox" checked> Transparency
-                    </label>
-                </div>
-            </div>
-
-            <div style="clear: both; margin-top: 15px;">
-                <span id="framesLbl" class="info-lbl">Frames: </span>
-                <span id="dimensionsLbl" class="info-lbl">Dimensions: </span>
-                <span id="nameLbl" class="info-lbl">Name: </span>
-            </div>
-
+            <label for="gifInput" class="custom-file-upload">Select GIF File</label>
             <input type="file" id="gifInput" accept="image/gif">
-            <canvas id="processCanvas"></canvas>
+
+            <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar"></div></div>
+            <div id="gifStatus" class="status-msg">Waiting for file...</div>
+    
+            <div id="placeholderContainer">
+                <img id="previewImg" src="bobonchik-spin-sp.gif" alt="Preview">
+            </div>
+            
+            <canvas id="outputCanvas"></canvas>
+            
+            <div id="gifResultsArea">
+                
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <label>Texture Quality / Cost:</label>
+                        <select id="resSelect" class="res-select">
+                            <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
+                            <option value="2048">2048px (High) 50L$ Upload</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="checkbox-container" title="Uncheck to create a JPG with black background (Fixes SL Ghosting)">
+                            <input type="checkbox" id="transparentChkbox" checked> Transparency (PNG)
+                        </label>
+                        <div style="font-size:0.75em; color:#666; margin-top:5px; margin-left: 24px;">
+                            Uncheck to fix "ghosting" artifacts in SL (Forces Black Background).
+                        </div>
+                    </div>
+
+                    <div class="control-group" style="border-top: 1px solid #333; padding-top: 10px;">
+                        <label>Grid Info (Auto-Calculated):</label>
+                        <div id="gridInfoDisplay" style="font-family: monospace; color: #4CAF50;">Waiting...</div>
+                    </div>
+                </div>
+
+                <div id="fileNameDisplay" class="filename-display">...</div>
+                
+                <div class="filename-warning">
+                    ⚠️ <b>IMPORTANT:</b> Do not rename your texture after the ".anim;...".<br>
+                    This part is required for the script to work properly.
+                </div>
+
+                <button id="btnDownload" class="action-btn" disabled>Download Texture</button>
+                <button class="action-btn" onclick="location.reload()" style="background: #222; width: 150px; margin-top: 5px;">Start Over</button>
+            </div>
         </div>
-        
-        <p style="font-size: 10px; color: #888; margin-top: 10px;">
-            Logic ported 1:1 from C# source code.<br>
-            FPS fixed at 10. Grid logic matches original .exe.
-        </p>
     </div>
 
 <script>
     // ==========================================
-    // 1. SEGURANÇA (MANTIDA DO TESTER.HTML)
+    // 1. SEGURANÇA (MMC STANDARD)
     // ==========================================
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
     const LINK_EXPIRATION_MINUTES = 2; 
@@ -153,7 +200,7 @@
         if (urlToken === calculatedToken) {
             localStorage.setItem(storageKey, "true");
             lockedScreen.style.display = 'none';
-            appContent.style.display = 'block'; // Mostra o app
+            appContent.style.display = 'flex';
         } else {
             lockReason.innerText = "Error: Security Token Mismatch.";
         }
@@ -161,65 +208,72 @@
     checkAccess();
 
     // ==========================================
-    // 2. LÓGICA PORTADA DO C# (G2SLA.cs)
+    // 2. LÓGICA DO GIF CREATOR (REPLICA PERFEITA + 2048px)
     // ==========================================
     
-    // Variáveis Globais (imitando a classe Form)
+    // Elementos UI
+    const gifInput = document.getElementById('gifInput');
+    const previewImg = document.getElementById('previewImg');
+    const gifStatus = document.getElementById('gifStatus');
+    const gifProgressContainer = document.getElementById('gifProgressContainer');
+    const gifProgressBar = document.getElementById('gifProgressBar');
+    const gifResultsArea = document.getElementById('gifResultsArea');
+    
+    const resSelect = document.getElementById('resSelect');
+    const transparentChkbox = document.getElementById('transparentChkbox');
+    const gridInfoDisplay = document.getElementById('gridInfoDisplay');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const btnDownload = document.getElementById('btnDownload');
+    const canvas = document.getElementById('outputCanvas');
+
+    // Variáveis Globais (Estado)
     let currentFrames = [];
     let xFrames = 0;
     let yFrames = 0;
-    let fileName = "";
-    let safeFileName = "";
-    let outputFileName = "";
-    
-    const gifInput = document.getElementById('gifInput');
-    const previewImg = document.getElementById('previewImg');
-    const noImageLbl = document.getElementById('noImageLbl');
-    const loadStatusLbl = document.getElementById('loadStatusLbl');
-    const framesLbl = document.getElementById('framesLbl');
-    const dimensionsLbl = document.getElementById('dimensionsLbl');
-    const nameLbl = document.getElementById('nameLbl');
-    const outputBtn = document.getElementById('outputBtn');
-    const transparentChkbox = document.getElementById('transparentChkbox');
-    const canvas = document.getElementById('processCanvas');
+    let originalName = "";
+    let finalFileName = "";
 
-    // Load GIF (Button Click)
+    // -- CARREGAMENTO DO GIF --
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
-
-        fileName = file.name;
-        // Simula FileInfo.Name
-        safeFileName = fileName;
         
-        loadStatusLbl.innerText = "Loading...";
+        originalName = file.name.replace(/\.[^/.]+$/, "");
         
+        // Exibe Preview Animado
         const reader = new FileReader();
         reader.onload = function(event) {
-            // Preview
             previewImg.src = event.target.result;
-            previewImg.style.display = 'block';
-            noImageLbl.style.display = 'none';
-            loadStatusLbl.innerText = safeFileName;
-
-            // Extrair Frames (Simula Image.FromFile)
-            gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas', cumulative: true })
-            .then(function (frames) {
-                currentFrames = frames;
-                computeOutput(); // Chama a lógica de cálculo
-            });
         };
         reader.readAsDataURL(file);
+
+        // UI Updates
+        gifStatus.innerText = "Analyzing Frames...";
+        gifProgressContainer.style.display = 'block';
+        gifProgressBar.style.width = '10%';
+        gifResultsArea.style.display = 'none';
+
+        // Extração de Frames
+        gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: true })
+        .then(function (frames) {
+            currentFrames = frames;
+            calculateGridLogic(); // Calcula a grade estilo .EXE
+            
+            // Habilita a área de resultados, mas o download só gera ao clicar
+            gifStatus.innerText = "Ready to Convert!";
+            gifProgressBar.style.width = '100%';
+            setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
+            
+            gifResultsArea.style.display = 'flex';
+            btnDownload.disabled = false;
+        });
     });
 
-    // Lógica Exata do método computeOutput() do C#
-    function computeOutput() {
-        xFrames = 0;
-        yFrames = 0;
+    // -- LÓGICA MATEMÁTICA DO C# (G2SLA.cs) --
+    function calculateGridLogic() {
         let frameCount = currentFrames.length;
         
         // int num = Convert.ToInt32(Math.Sqrt(frameCount));
-        // Math.round é o equivalente mais próximo do ToInt32 padrão para arredondamento
         let num = Math.round(Math.sqrt(frameCount)); 
         let num2 = frameCount;
 
@@ -231,9 +285,9 @@
                 num2++;
             }
             
-            // Lógica condicional exata do C#
+            // Regras rígidas do C#
             if (num2 < 16) {
-                xFrames = Math.floor(num2 / 2); // integer division
+                xFrames = Math.floor(num2 / 2);
                 yFrames = 2;
             } else if (num2 < 32) {
                 xFrames = Math.floor(num2 / 4);
@@ -247,132 +301,110 @@
             }
         }
 
-        // Labels Update
-        if (num2 != frameCount) {
-            framesLbl.innerText = "Frames: " + frameCount + " + 1";
-        } else {
-            framesLbl.innerText = "Frames: " + frameCount;
-        }
-
-        dimensionsLbl.innerText = "Dimensions: " + xFrames + "x" + yFrames + " frames";
+        // Atualiza Info na Tela
+        gridInfoDisplay.innerText = `${xFrames} cols x ${yFrames} rows (${frameCount} frames)`;
         
-        // Naming Logic: .anim;X;Y;10 (HARDCODED 10 FPS)
-        let nameBase = safeFileName.replace(".gif", "");
-        outputFileName = nameBase + ".anim;" + xFrames + ";" + yFrames + ";10";
-        nameLbl.innerText = "Name: " + outputFileName;
-
-        outputBtn.disabled = false;
-        return true;
+        // Nome do Arquivo (SEMPRE FPS 10, IGUAL AO ORIGINAL)
+        let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
+        finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
+        fileNameDisplay.innerText = finalFileName;
     }
 
-    // Lógica Exata do método outputBtn_Click()
-    function generateOutput() {
+    // -- GERAÇÃO E DOWNLOAD --
+    btnDownload.onclick = function() {
         if (!currentFrames.length) return;
 
-        loadStatusLbl.innerText = "Outputting...";
-        
-        // Pega dimensões do primeiro frame
-        let tempImg = currentFrames[0].getImage();
-        let width = tempImg.width;
-        let height = tempImg.height;
+        gifStatus.innerText = "Generating Texture...";
+        btnDownload.disabled = true;
 
-        // Bitmap val = new Bitmap(...)
-        canvas.width = xFrames * width;
-        canvas.height = yFrames * height;
-        let ctx = canvas.getContext('2d');
+        setTimeout(() => {
+            // 1. Configura Canvas
+            let tempImg = currentFrames[0].getImage();
+            let width = tempImg.width;
+            let height = tempImg.height;
+            
+            canvas.width = xFrames * width;
+            canvas.height = yFrames * height;
+            let ctx = canvas.getContext('2d');
 
-        // Lógica de loop do C#
-        // Ele itera sobre a grade e pega o frame correspondente (num3)
-        let num2 = currentFrames.length;
-        if (num2 % 2 != 0) num2++; // Ajuste para ímpar
+            // 2. Loop de Desenho (Lógica do C#)
+            let num2 = currentFrames.length;
+            if (num2 % 2 != 0) num2++; 
 
-        let num3 = 0; // Índice do frame atual
+            let num3 = 0; 
 
-        for (let i = 0; i < yFrames; i++) {
-            for (let j = 0; j < xFrames; j++) {
-                let frameToDraw = null;
+            for (let i = 0; i < yFrames; i++) {
+                for (let j = 0; j < xFrames; j++) {
+                    let frameToDraw = null;
 
-                if (num3 < currentFrames.length) {
-                    frameToDraw = currentFrames[num3];
-                } else {
-                    // Padding: Se acabou os frames, usa o primeiro (SelectActiveFrame(..., 0))
-                    // Nota: O código C# usa o frame 0 como padding se num3 >= num2
-                    frameToDraw = currentFrames[0];
+                    if (num3 < currentFrames.length) {
+                        frameToDraw = currentFrames[num3];
+                    } else {
+                        // Padding com frame 0 (Lógica do C#)
+                        frameToDraw = currentFrames[0];
+                    }
+
+                    if (frameToDraw) {
+                        let posX = j * width;
+                        let posY = i * height;
+                        ctx.drawImage(frameToDraw.getImage(), posX, posY);
+                    }
+                    num3++;
                 }
-
-                // Desenha no Canvas (Substitui GetPixel/SetPixel)
-                if (frameToDraw) {
-                    let posX = j * width;
-                    let posY = i * height;
-                    ctx.drawImage(frameToDraw.getImage(), posX, posY);
-                }
-
-                num3++;
             }
-        }
 
-        // Resizing Logic (width > 1024 || height > 1024)
-        if (canvas.width > 1024 || canvas.height > 1024) {
-            loadStatusLbl.innerText = "Resizing image...";
+            // 3. Redimensionamento (DIFERENCIAL 2048px)
+            let targetMax = parseInt(resSelect.value); // 1024 ou 2048
             
-            // Cria canvas temporário para resize
-            let tempCanvas = document.createElement('canvas');
-            let tCtx = tempCanvas.getContext('2d');
-            
-            // Lógica ternária do C#
-            let num6 = (canvas.width > 1024) ? 1024 : canvas.width;
-            let num7 = (canvas.height > 1024) ? 1024 : canvas.height;
-            
-            tempCanvas.width = num6;
-            tempCanvas.height = num7;
-            
-            // DrawImage com qualidade (Browsers fazem bicubic por padrão ao reduzir)
-            tCtx.drawImage(canvas, 0, 0, num6, num7);
-            
-            // Substitui canvas original
-            canvas.width = num6;
-            canvas.height = num7;
-            ctx.drawImage(tempCanvas, 0, 0);
-        }
+            if (canvas.width > targetMax || canvas.height > targetMax) {
+                let tempCanvas = document.createElement('canvas');
+                let tCtx = tempCanvas.getContext('2d');
+                
+                // Lógica de manter proporção não é explícita no C# para resize,
+                // mas lá ele usa "DrawImage" num bitmap novo quadrado se passar do limite.
+                // Aqui vamos forçar o quadrado máximo escolhido para manter compatibilidade SL.
+                let num6 = (canvas.width > targetMax) ? targetMax : canvas.width;
+                let num7 = (canvas.height > targetMax) ? targetMax : canvas.height;
+                
+                tempCanvas.width = num6;
+                tempCanvas.height = num7;
+                tCtx.drawImage(canvas, 0, 0, num6, num7);
+                
+                canvas.width = num6;
+                canvas.height = num7;
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
 
-        // Save Logic (JPG vs PNG)
-        let finalFormat = "image/png";
-        let finalExt = ".png";
+            // 4. Salvar (JPG vs PNG)
+            const link = document.createElement('a');
+            link.download = finalFileName;
 
-        if (!transparentChkbox.checked) {
-            // Se desmarcado -> JPG
-            finalFormat = "image/jpeg";
-            finalExt = ".jpg";
+            if (!transparentChkbox.checked) {
+                // JPG (Fundo Preto para evitar Ghosting)
+                let compositeCanvas = document.createElement('canvas');
+                compositeCanvas.width = canvas.width;
+                compositeCanvas.height = canvas.height;
+                let cCtx = compositeCanvas.getContext('2d');
+                
+                cCtx.fillStyle = "#000000"; // Fundo Preto
+                cCtx.fillRect(0, 0, canvas.width, canvas.height);
+                cCtx.drawImage(canvas, 0, 0);
+                
+                link.href = compositeCanvas.toDataURL("image/jpeg", 0.9);
+                link.download += ".jpg";
+            } else {
+                // PNG (Transparente)
+                link.href = canvas.toDataURL("image/png");
+                link.download += ".png";
+            }
+
+            link.click();
             
-            // JPG no C# GDI+ preenche fundo transparente com preto automaticamente.
-            // No Canvas HTML5, precisamos pintar preto antes se formos salvar como JPG,
-            // pois conversão direta pode deixar artefatos ou fundo preto dependendo do browser.
-            // Para garantir: Compositar sobre preto.
-            let compositeCanvas = document.createElement('canvas');
-            compositeCanvas.width = canvas.width;
-            compositeCanvas.height = canvas.height;
-            let cCtx = compositeCanvas.getContext('2d');
-            cCtx.fillStyle = "#000000";
-            cCtx.fillRect(0, 0, canvas.width, canvas.height);
-            cCtx.drawImage(canvas, 0, 0);
-            
-            // Download
-            triggerDownload(compositeCanvas.toDataURL("image/jpeg", 0.9), outputFileName + finalExt);
-        } else {
-            // PNG (Mantém transparência)
-            triggerDownload(canvas.toDataURL("image/png"), outputFileName + finalExt);
-        }
+            gifStatus.innerHTML = `<span class="highlight-success">✔ Texture Downloaded!</span>`;
+            btnDownload.disabled = false;
+        }, 50); // Timeout para UI atualizar
+    };
 
-        loadStatusLbl.innerText = "Image produced.";
-        alert("Image " + outputFileName + finalExt + " produced.");
-    }
-
-    function triggerDownload(url, filename) {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = url;
-        link.click();
-    }
 </script>
 </body>
 </html>
