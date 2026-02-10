@@ -33,10 +33,6 @@
             text-align: center;
             color: #d9534f;
         }
-        .lock-screen-gif {
-            max-width: 150px;
-            margin-bottom: 20px;
-        }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
         #lockedScreen p { color: #888; font-size: 1.1em; }
 
@@ -178,7 +174,6 @@
 <body>
 
     <div id="lockedScreen">
-        <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
         <h2>Access Denied</h2>
         <p>You need to use the in-world object to access this tool.</p>
         <p style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
@@ -247,7 +242,7 @@
     // SECURITY CHECK (TOKEN VERIFICATION)
     // ==========================================================
     
-    // ESTA SENHA DEVE SER A MESMA DO LSL
+    // 🔴 ESTA SENHA TEM QUE SER A MESMA NO SCRIPT LSL!
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
 
     function checkAccess() {
@@ -260,18 +255,18 @@
             return; // Stay locked
         }
 
-        // CORREÇÃO: O LSL usa 'llMD5String(str, 0)', que adiciona ":0" ao final.
-        // Precisamos adicionar ":0" aqui no JS também para bater a conta.
-        const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY + ":0").toString();
+        // 1. Recalculate the Token using the same Secret Key
+        // Logic: MD5( UUID + SECRET )
+        const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY).toString();
 
+        // 2. Compare calculated token with the one in the URL
         if (urlToken === calculatedToken) {
             // SUCCESS: Signature Matches!
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
+            // DENIED: Signature Failed (User tried to edit UUID)
             console.log("Access Denied: Invalid Token Signature.");
-            console.log("Expected (JS): " + calculatedToken);
-            console.log("Received (URL): " + urlToken);
         }
     }
 
@@ -356,6 +351,7 @@
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         gifInstruction.style.display = 'block';
         gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffixExample}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
+        
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
