@@ -17,7 +17,7 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- LOCK SCREEN (CLEAN) --- */
+        /* --- LOCK SCREEN --- */
         #lockedScreen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 80vh; text-align: center; color: #d9534f;
@@ -25,8 +25,6 @@
         .lock-screen-gif { max-width: 150px; margin-bottom: 20px; }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
         #lockedScreen p { color: #888; font-size: 1.1em; }
-        
-        /* Error details (subtle) */
         #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; }
 
         /* --- APP CONTENT --- */
@@ -43,6 +41,7 @@
         .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
 
+        /* TABS */
         .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
         .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-btn:hover { color: #fff; }
@@ -52,6 +51,7 @@
         .tab-content.active { display: block; } 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* INPUTS & BUTTONS */
         input[type=file] { display: none; }
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
@@ -101,8 +101,8 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
-                <button class="tab-btn" onclick="openTab('tabVideo', event)">Video to GIF</button>
+                <button id="tabBtnGif" class="tab-btn active">GIF to Texture</button>
+                <button id="tabBtnVideo" class="tab-btn">Video to GIF</button>
             </div>
 
             <div id="tabGif" class="tab-content active">
@@ -188,14 +188,11 @@
         }
 
         // 4. Hash Verification
-        // Calculation: MD5( UUID + TIMESTAMP + SECRET_KEY + ":0" )
         const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
         const calculatedToken = CryptoJS.MD5(stringToHash).toString();
 
         if (urlToken === calculatedToken) {
-            // AUTHENTICATED
-            localStorage.setItem(storageKey, "true"); // Burn the token locally
-            
+            localStorage.setItem(storageKey, "true"); 
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
@@ -206,15 +203,31 @@
     checkAccess();
 
     // ==========================================================
-    // APP LOGIC
+    // TAB LOGIC (REFACTORED FOR STABILITY)
     // ==========================================================
-    function openTab(tabName, evt) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabName).classList.add('active');
-        if(evt) evt.currentTarget.classList.add('active');
-    }
+    
+    const tabBtnGif = document.getElementById('tabBtnGif');
+    const tabBtnVideo = document.getElementById('tabBtnVideo');
+    const tabGif = document.getElementById('tabGif');
+    const tabVideo = document.getElementById('tabVideo');
 
+    tabBtnGif.addEventListener('click', () => {
+        tabGif.classList.add('active');
+        tabVideo.classList.remove('active');
+        tabBtnGif.classList.add('active');
+        tabBtnVideo.classList.remove('active');
+    });
+
+    tabBtnVideo.addEventListener('click', () => {
+        tabVideo.classList.add('active');
+        tabGif.classList.remove('active');
+        tabBtnVideo.classList.add('active');
+        tabBtnGif.classList.remove('active');
+    });
+
+    // ==========================================================
+    // GIF TO TEXTURE LOGIC
+    // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const gifInstruction = document.getElementById('gifInstruction');
@@ -292,6 +305,9 @@
     }
     function resetGifTool() { resetGifUiState(); placeholderContainer.style.display = 'block'; gifStatus.innerText = "Waiting for file..."; gifInput.value = ""; }
 
+    // ==========================================================
+    // VIDEO TO GIF LOGIC
+    // ==========================================================
     const videoInput = document.getElementById('videoInput'), convertVideoBtn = document.getElementById('convertVideoBtn');
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const videoProgressContainer = document.getElementById('videoProgressContainer'), videoProgressBar = document.getElementById('videoProgressBar');
