@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTÉTICA CLÁSSICA (ORIGINAL) --- */
+        /* --- ESTÉTICA CLÁSSICA (MMC STANDARD) --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -52,46 +52,28 @@
         button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
         button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
 
-        /* PAINEL DE CONTROLE */
+        /* PAINEL DE CONTROLE (ORGANIZADO) */
         .controls-panel {
             background: #222; border: 1px solid #444; border-radius: 6px;
-            padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
+            padding: 20px; margin-bottom: 20px; width: 100%; max-width: 500px; /* Mais compacto */
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        .controls-row {
-            display: flex; justify-content: center; gap: 20px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap;
-        }
-        
-        .control-group { text-align: left; display: flex; flex-direction: column; }
-        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; }
+        .control-group { text-align: left; }
+        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; display: block; }
         
         .res-select {
-            background-color: #333; color: #fff; padding: 8px; 
+            background-color: #333; color: #fff; padding: 10px; 
             border: 1px solid #555; border-radius: 4px; 
-            font-size: 13px; cursor: pointer; width: 240px;
+            font-size: 13px; cursor: pointer; width: 100%;
         }
 
-        .bg-option { display: flex; align-items: center; margin-top: 5px; font-size: 0.85em; color: #bbb; cursor: pointer; }
-        .bg-option input { margin-right: 8px; cursor: pointer; }
+        .bg-option { display: flex; align-items: center; font-size: 0.85em; color: #bbb; cursor: pointer; }
+        .bg-option input { margin-right: 10px; cursor: pointer; transform: scale(1.2); }
 
-        .toggle-btn {
-            background: #333; border: 1px solid #666; color: #fff;
-            padding: 5px 15px; font-size: 0.8em; cursor: pointer; border-radius: 20px;
-            transition: 0.3s; margin-left: 10px;
-        }
-        .toggle-btn:hover { background: #555; }
-        .toggle-btn.active { background: #4a90e2; border-color: #4a90e2; }
+        .grid-info-text { font-family: monospace; color: #4CAF50; font-size: 0.9em; margin-top: 2px; }
 
-        .custom-inputs { display: none; align-items: center; gap: 10px; }
-        .small-input {
-            width: 50px; background: #111; border: 1px solid #555; color: #fff;
-            padding: 8px; text-align: center; border-radius: 4px; font-weight: bold;
-        }
-        
-        .grid-info { font-size: 0.85em; color: #888; margin-top: 5px; font-family: monospace; }
-        .warn-text { color: #e6b800; }
-        .good-text { color: #4CAF50; }
-
+        /* PREVIEW E RESULTADOS */
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; border: 1px solid #333; }
         
@@ -104,14 +86,8 @@
         .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
         .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
         
-        .filename-display {
-            font-family: monospace; color: #aaa; background: #222;
-            padding: 8px 15px; border-radius: 4px; border: 1px solid #444;
-            margin-bottom: 5px; font-size: 0.9em;
-        }
-        
         .filename-warning {
-            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em;
+            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 450px; line-height: 1.4em; background: rgba(217, 83, 79, 0.1); padding: 10px; border-radius: 4px;
         }
     </style>
 </head>
@@ -150,53 +126,32 @@
                 
                 <div class="controls-panel">
                     
-                    <div class="controls-row">
-                        <div class="control-group">
-                            <label>Texture Quality / Cost:</label>
-                            <select id="resSelect" class="res-select">
-                                <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
-                                <option value="2048">2048px (High / Big Frames) 50L$ Upload</option>
-                            </select>
-                            
-                            <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
-                                <input type="checkbox" id="transparentChkbox" checked> 
-                                Transparency (PNG)
-                            </label>
-                            <div style="font-size: 0.7em; color:#666; margin-left: 24px;">Uncheck to fix ghosting.</div>
-                        </div>
-                        
-                        <div class="control-group" style="justify-content: flex-end;">
-                            <button id="toggleCustomBtn" class="toggle-btn" onclick="toggleCustomMode()">✎ Edit Grid Manually</button>
-                        </div>
+                    <div class="control-group">
+                        <label>Texture Quality / Cost:</label>
+                        <select id="resSelect" class="res-select">
+                            <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
+                            <option value="2048">2048px (High / Big Frames) 50L$ Upload</option>
+                        </select>
                     </div>
 
-                    <div class="controls-row">
-                        
-                        <div id="autoGridArea" class="control-group">
-                            <label>Smart Grid Suggestions:</label>
-                            <div id="gridInfoDisplay" style="font-family: monospace; color: #4CAF50; margin-top: 5px;">Waiting...</div>
-                        </div>
+                    <div class="control-group">
+                        <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
+                            <input type="checkbox" id="transparentChkbox" checked> 
+                            Transparency (PNG) 
+                            <span style="font-size:0.8em; color:#666; margin-left: 5px;">(Uncheck to fix ghosting)</span>
+                        </label>
+                    </div>
 
-                        <div id="manualGridArea" class="control-group custom-inputs">
-                            <div>
-                                <label>Cols:</label>
-                                <input type="number" id="customCols" class="small-input" value="4" min="1" onchange="manualGridUpdate()">
-                            </div>
-                            <div style="padding-top: 15px; color:#666;">x</div>
-                            <div>
-                                <label>Rows:</label>
-                                <input type="number" id="customRows" class="small-input" value="4" min="1" onchange="manualGridUpdate()">
-                            </div>
-                        </div>
+                    <div class="control-group" style="border-top: 1px solid #333; padding-top: 10px;">
+                        <label>Auto-Calculated Grid:</label>
+                        <div id="gridInfoDisplay" class="grid-info-text">Waiting...</div>
                     </div>
 
                 </div>
 
-                <div id="fileNameDisplay" class="filename-display">...</div>
-                
                 <div class="filename-warning">
-                    ⚠️ <b>IMPORTANT:</b> Do not rename your texture after the ".anim;...".<br>
-                    This part is required for the script to work properly.
+                    ⚠️ <b>IMPORTANT:</b> Do not rename the downloaded file.<br>
+                    The numbers at the end (.anim;X;Y;10) are required for the script.
                 </div>
 
                 <button id="btnDownload" class="action-btn" disabled>Download Texture</button>
@@ -254,7 +209,7 @@
     checkAccess();
 
     // ==========================================
-    // 2. GIF LOGIC (RAW QUALITY)
+    // 2. LOGIC (CLEAN & POWERFUL)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -265,21 +220,14 @@
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
-    const autoGridArea = document.getElementById('autoGridArea');
-    const manualGridArea = document.getElementById('manualGridArea');
-    const toggleCustomBtn = document.getElementById('toggleCustomBtn');
-    const customCols = document.getElementById('customCols');
-    const customRows = document.getElementById('customRows');
 
     let currentFrames = [];
     let xFrames = 0;
     let yFrames = 0;
     let originalName = "";
     let finalFileName = "";
-    let isCustomMode = false;
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -312,32 +260,7 @@
         });
     });
 
-    function toggleCustomMode() {
-        isCustomMode = !isCustomMode;
-        if (isCustomMode) {
-            autoGridArea.style.display = 'none';
-            manualGridArea.style.display = 'flex';
-            toggleCustomBtn.innerText = "← Back to Auto";
-            toggleCustomBtn.classList.add("active");
-            customCols.value = xFrames;
-            customRows.value = yFrames;
-        } else {
-            autoGridArea.style.display = 'block';
-            manualGridArea.style.display = 'none';
-            toggleCustomBtn.innerText = "✎ Edit Grid Manually";
-            toggleCustomBtn.classList.remove("active");
-            calculateGridLogic(); 
-        }
-        updateFileName();
-    }
-
-    function manualGridUpdate() {
-        xFrames = parseInt(customCols.value) || 1;
-        yFrames = parseInt(customRows.value) || 1;
-        updateFileName();
-    }
-
-    // CLONE DO C# - LÓGICA DE GRADE
+    // LÓGICA DO PROGRAMA C# (CLONE)
     function calculateGridLogic() {
         let frameCount = currentFrames.length;
         let num = Math.round(Math.sqrt(frameCount)); 
@@ -355,13 +278,10 @@
         }
 
         gridInfoDisplay.innerText = `${xFrames} cols x ${yFrames} rows (${frameCount} frames)`;
-        updateFileName();
-    }
-
-    function updateFileName() {
+        
+        // Nome Interno (Invisível mas usado no download)
         let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
         finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
-        fileNameDisplay.innerText = finalFileName;
     }
 
     btnDownload.onclick = function() {
@@ -403,20 +323,20 @@
                 }
             }
 
-            // --- RESIZE PURO (SEM FILTRO) ---
+            // --- RESIZE (RAW QUALITY) ---
             let targetMax = parseInt(resSelect.value); 
             
             if (canvas.width > targetMax || canvas.height > targetMax || targetMax === 2048) {
                 let tempCanvas = document.createElement('canvas');
                 let tCtx = tempCanvas.getContext('2d');
                 
-                // Força o tamanho quadrado final (1024 ou 2048)
+                // Força o quadrado 1024 ou 2048
                 let num6 = targetMax;
                 let num7 = targetMax;
                 
                 tempCanvas.width = num6; tempCanvas.height = num7;
                 
-                // Alta qualidade de resize nativa do browser (sem post-process)
+                // Alta qualidade nativa
                 tCtx.imageSmoothingEnabled = true;
                 tCtx.imageSmoothingQuality = 'high';
                 tCtx.drawImage(canvas, 0, 0, num6, num7);
