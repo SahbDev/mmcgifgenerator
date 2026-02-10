@@ -17,6 +17,7 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
+        /* --- LOCK SCREEN (CLEAN) --- */
         #lockedScreen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 80vh; text-align: center; color: #d9534f;
@@ -24,7 +25,11 @@
         .lock-screen-gif { max-width: 150px; margin-bottom: 20px; }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
         #lockedScreen p { color: #888; font-size: 1.1em; }
+        
+        /* Error details (subtle) */
+        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; }
 
+        /* --- APP CONTENT --- */
         #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
@@ -34,6 +39,7 @@
         }
 
         h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
+        
         .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
 
@@ -41,7 +47,10 @@
         .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-btn:hover { color: #fff; }
         .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
-        .tab-content { display: none; animation: fadeIn 0.5s; } .tab-content.active { display: block; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .tab-content { display: none; animation: fadeIn 0.5s; } 
+        .tab-content.active { display: block; } 
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         input[type=file] { display: none; }
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
@@ -55,6 +64,7 @@
         .highlight-success { color: #eee; font-weight: bold; } 
         .highlight-warning { color: #FFD700; font-weight: bold; font-size: 0.8em; }
         .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
+        
         .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
         .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
 
@@ -78,9 +88,9 @@
 
     <div id="lockedScreen">
         <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
-        <h2 id="lockTitle">Access Denied</h2>
-        <p>You need to use the in-world object to access this tool.</p>
-        <p id="lockReason" style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
+        <h2>Access Denied</h2>
+        <p>You need to use your in-world HUD to generate your access link.</p>
+        <p id="lockReason">Error: Invalid or Expired Token.</p>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -141,11 +151,11 @@
 
 <script>
     // ==========================================================
-    // SECURITY: ONE-TIME LINK & EXPIRATION
+    // SECURITY SYSTEM (PRODUCTION)
     // ==========================================================
     
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
-    const LINK_EXPIRATION_MINUTES = 2; // Link válido por 2 minutos apenas
+    const LINK_EXPIRATION_MINUTES = 2; // Link valid for 2 minutes
 
     function checkAccess() {
         const params = new URLSearchParams(window.location.search);
@@ -154,47 +164,41 @@
         const timestamp = params.get('ts'); 
         const lockReason = document.getElementById('lockReason');
 
-        // 1. DADOS INCOMPLETOS
+        // 1. Check Parameters
         if (!userUUID || !urlToken || !timestamp) {
-            console.log("Denied: Missing parameters.");
             lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
 
-        // 2. USO ÚNICO (AUTO-DESTRUIÇÃO NO NAVEGADOR)
-        // Verifica se este token já foi salvo no LocalStorage deste navegador
+        // 2. One-Time Use Check (Local)
         const storageKey = "used_token_" + urlToken;
         if (localStorage.getItem(storageKey)) {
-             console.log("Denied: Token already used.");
              lockReason.innerText = "Error: This link has already been used. Please generate a new one.";
              return;
         }
 
-        // 3. VERIFICAÇÃO DE TEMPO (EXPIRAÇÃO)
+        // 3. Time Expiration Check
         const linkTime = parseInt(timestamp) * 1000;
         const now = new Date().getTime();
         const diffMinutes = (now - linkTime) / 1000 / 60;
 
         if (diffMinutes > LINK_EXPIRATION_MINUTES) {
-            console.log("Denied: Time expired.");
             lockReason.innerText = "Error: Link expired (Time limit exceeded). Generate a new one.";
             return;
         }
 
-        // 4. VERIFICAÇÃO DE ASSINATURA (HASH)
-        // MD5(UUID + TIMESTAMP + KEY + ":0")
+        // 4. Hash Verification
+        // Calculation: MD5( UUID + TIMESTAMP + SECRET_KEY + ":0" )
         const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
         const calculatedToken = CryptoJS.MD5(stringToHash).toString();
 
         if (urlToken === calculatedToken) {
-            // SUCESSO!
-            // Marca o token como usado IMEDIATAMENTE
-            localStorage.setItem(storageKey, "true");
-
+            // AUTHENTICATED
+            localStorage.setItem(storageKey, "true"); // Burn the token locally
+            
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
-            console.log("Denied: Bad Signature.");
             lockReason.innerText = "Error: Security Token Mismatch.";
         }
     }
@@ -202,7 +206,7 @@
     checkAccess();
 
     // ==========================================================
-    // APP LOGIC (REST OF THE CODE)
+    // APP LOGIC
     // ==========================================================
     function openTab(tabName, evt) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
