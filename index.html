@@ -88,21 +88,15 @@
 
         .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
         
-        /* --- RESULTADOS (CANVAS COM FUNDO TRANSPARENTE CLARO) --- */
+        /* --- RESULTADOS (REAL TRANSPARENT - FUNDO DO SITE) --- */
         canvas { 
             max-width: 100%; 
             border: 1px solid #333; 
             margin-top: 20px; 
             display: none; 
             
-            /* Padrão Xadrez Real (Branco/Cinza) para confirmar transparência */
-            background-color: #fff;
-            background-image: 
-                linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px; 
+            /* Fundo Transparente Real */
+            background: transparent;
         }
 
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
@@ -316,7 +310,7 @@
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
             try {
-                // 'cumulative: true' ajuda a montar frames que dependem dos anteriores
+                // 'cumulative: true' mantém a correção do bug de textura
                 gifFrames({ 
                     url: event.target.result, 
                     frames: 'all', 
