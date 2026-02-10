@@ -35,6 +35,11 @@
         }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
         #lockedScreen p { color: #888; font-size: 1.1em; }
+        /* Style for the ERROR GIF */
+        .lock-screen-gif {
+            max-width: 150px; /* Adjust size as needed */
+            margin-bottom: 20px;
+        }
 
         /* --- MAIN APP (Hidden by default) --- */
         #appContent {
@@ -174,6 +179,7 @@
 <body>
 
     <div id="lockedScreen">
+        <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
         <h2>Access Denied</h2>
         <p>You need to use the in-world object to access this tool.</p>
         <p style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
