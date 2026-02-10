@@ -16,27 +16,17 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- TELA DE BLOQUEIO (Visual do tester.html) --- */
+        /* --- TELA DE BLOQUEIO --- */
         #lockedScreen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 80vh; text-align: center; color: #d9534f;
         }
-        
-        /* O GIF de Erro */
-        .lock-screen-gif { 
-            max-width: 150px; margin-bottom: 20px; border-radius: 5px;
-        }
-        
+        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; border-radius: 5px; }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
         #lockedScreen p { color: #888; font-size: 1.1em; }
-        
-        #lockReason { 
-            font-size: 0.9em; margin-top: 15px; opacity: 0.6; 
-            font-family: monospace; color: #bbb; border: 1px solid #333; 
-            padding: 10px; background: #1a1a1a; 
-        }
+        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; border: 1px solid #333; padding: 10px; background: #1a1a1a; }
 
-        /* --- CONTEÚDO DO APP (Sua versão Perfeita) --- */
+        /* --- APP --- */
         #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
@@ -47,7 +37,6 @@
         }
 
         h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
-        
         .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
         .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
@@ -59,16 +48,12 @@
         button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
         button.action-btn:hover { background-color: #fff; color: #000; }
 
-        /* PAINEL DE CONTROLE */
+        /* CONTROLES */
         .controls-panel {
             background: #222; border: 1px solid #444; border-radius: 6px;
             padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
         }
-
-        .controls-row {
-            display: flex; justify-content: center; gap: 20px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap;
-        }
-        
+        .controls-row { display: flex; justify-content: center; gap: 20px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap; }
         .control-group { text-align: left; display: flex; flex-direction: column; }
         .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; }
         
@@ -78,7 +63,11 @@
             font-size: 13px; cursor: pointer; width: 240px;
         }
 
-        /* CUSTOM MODE STYLES */
+        /* CHECKBOX FIX */
+        .bg-option { display: flex; align-items: center; margin-top: 5px; font-size: 0.85em; color: #bbb; cursor: pointer; }
+        .bg-option input { margin-right: 8px; cursor: pointer; accent-color: #4a90e2; }
+
+        /* MODO MANUAL */
         .toggle-btn {
             background: #333; border: 1px solid #666; color: #fff;
             padding: 5px 15px; font-size: 0.8em; cursor: pointer; border-radius: 20px;
@@ -88,10 +77,7 @@
         .toggle-btn.active { background: #4a90e2; border-color: #4a90e2; }
 
         .custom-inputs { display: none; align-items: center; gap: 10px; }
-        .small-input {
-            width: 50px; background: #111; border: 1px solid #555; color: #fff;
-            padding: 8px; text-align: center; border-radius: 4px; font-weight: bold;
-        }
+        .small-input { width: 50px; background: #111; border: 1px solid #555; color: #fff; padding: 8px; text-align: center; border-radius: 4px; font-weight: bold; }
         
         .grid-info { font-size: 0.85em; color: #888; margin-top: 5px; font-family: monospace; }
         .warn-text { color: #e6b800; }
@@ -109,24 +95,17 @@
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
         
-        .filename-display {
-            font-family: monospace; color: #aaa; background: #222;
-            padding: 8px 15px; border-radius: 4px; border: 1px solid #444;
-            margin-bottom: 5px; font-size: 0.9em;
-        }
-        
-        .filename-warning {
-            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em;
-        }
+        .filename-display { font-family: monospace; color: #aaa; background: #222; padding: 8px 15px; border-radius: 4px; border: 1px solid #444; margin-bottom: 5px; font-size: 0.9em; }
+        .filename-warning { font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em; }
     </style>
 </head>
 <body>
 
     <div id="lockedScreen">
-        <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
+        <img src="ERROR.gif" alt="Access Denied" class="lock-screen-gif">
         <h2>Access Denied</h2>
         <p>You need to use your in-world HUD to generate your access link.</p>
-        <p id="lockReason">Checking security...</p>
+        <div id="lockReason">Checking security...</div>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -154,7 +133,6 @@
             <div id="gifResultsArea">
                 
                 <div class="controls-panel">
-                    
                     <div class="controls-row">
                         <div class="control-group">
                             <label>Texture Quality / Cost:</label>
@@ -162,6 +140,11 @@
                                 <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
                                 <option value="2048">2048px (High) 50L$ Upload</option>
                             </select>
+                            
+                            <label class="bg-option" title="Fixes ghosting in SL by removing alpha channel">
+                                <input type="checkbox" id="forceBg" checked onchange="triggerUpdate()"> 
+                                Remove Transparency (Fix Ghosting)
+                            </label>
                         </div>
                         
                         <div class="control-group" style="justify-content: flex-end;">
@@ -172,20 +155,13 @@
                     <div class="controls-row">
                         <div id="autoGridArea" class="control-group">
                             <label>Smart Grid Suggestions:</label>
-                            <select id="gridSelect" class="res-select" onchange="triggerUpdate()">
-                                </select>
+                            <select id="gridSelect" class="res-select" onchange="triggerUpdate()"></select>
                         </div>
 
                         <div id="manualGridArea" class="control-group custom-inputs">
-                            <div>
-                                <label>Cols:</label>
-                                <input type="number" id="customCols" class="small-input" value="4" min="1" onchange="triggerUpdate()">
-                            </div>
+                            <div><label>Cols:</label><input type="number" id="customCols" class="small-input" value="4" min="1" onchange="triggerUpdate()"></div>
                             <div style="padding-top: 15px; color:#666;">x</div>
-                            <div>
-                                <label>Rows:</label>
-                                <input type="number" id="customRows" class="small-input" value="4" min="1" onchange="triggerUpdate()">
-                            </div>
+                            <div><label>Rows:</label><input type="number" id="customRows" class="small-input" value="4" min="1" onchange="triggerUpdate()"></div>
                         </div>
                     </div>
 
@@ -196,7 +172,6 @@
                 </div>
 
                 <div id="fileNameDisplay" class="filename-display">...</div>
-                
                 <div class="filename-warning">
                     ⚠️ <b>IMPORTANT:</b> Do not rename your texture after the ".anim;...".<br>
                     This part is required for the script to work properly.
@@ -209,9 +184,7 @@
     </div>
 
 <script>
-    // ==========================================
-    // SISTEMA DE SEGURANÇA (IDÊNTICO AO SEU)
-    // ==========================================
+    // --- SEGURANÇA ---
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
     const LINK_EXPIRATION_MINUTES = 2; 
 
@@ -225,30 +198,24 @@
         const lockedScreen = document.getElementById('lockedScreen');
         const appContent = document.getElementById('appContent');
 
-        // 1. Validação Básica
         if (!userUUID || !urlToken || !timestamp) {
             lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
 
-        // 2. Anti-Replay
         const storageKey = "used_token_" + urlToken;
         if (localStorage.getItem(storageKey)) {
-             lockReason.innerText = "Error: This link has already been used. Please generate a new one.";
+             lockReason.innerText = "Error: Link already used.";
              return;
         }
 
-        // 3. Validação de Tempo
         const linkTime = parseInt(timestamp) * 1000;
         const now = new Date().getTime();
-        const diffMinutes = (now - linkTime) / 1000 / 60;
-        
-        if (diffMinutes > LINK_EXPIRATION_MINUTES) {
-            lockReason.innerText = "Error: Link expired (Time limit exceeded). Generate a new one.";
+        if ((now - linkTime) / 1000 / 60 > LINK_EXPIRATION_MINUTES) {
+            lockReason.innerText = "Error: Link Expired.";
             return;
         }
 
-        // 4. Hash Check (Igual ao LSL)
         const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
         const calculatedToken = CryptoJS.MD5(stringToHash).toString();
 
@@ -262,9 +229,7 @@
     }
     checkAccess();
 
-    // ==========================================
-    // LÓGICA DO GIF CREATOR (A VERSÃO PERFEITA)
-    // ==========================================
+    // --- APP ---
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const outputCanvas = document.getElementById('outputCanvas');
@@ -273,10 +238,9 @@
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
-    
-    // Controles
     const resSelect = document.getElementById('resSelect');
     const gridSelect = document.getElementById('gridSelect');
+    const forceBg = document.getElementById('forceBg');
     const autoGridArea = document.getElementById('autoGridArea');
     const manualGridArea = document.getElementById('manualGridArea');
     const toggleCustomBtn = document.getElementById('toggleCustomBtn');
@@ -300,10 +264,8 @@
         outputCanvas.style.display = 'none';
         gifResultsArea.style.display = 'none';
         gifStatus.innerText = "Analyzing...";
-        
         gifProgressContainer.style.display = 'block';
         gifProgressBar.style.width = '10%';
-        gifProgressBar.innerText = '10%';
         
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -317,7 +279,6 @@
                 
                 availableGrids = calculateAllGrids(frames.length, w, h);
                 populateGridSelector(availableGrids);
-                
                 origFramesDisplay.innerText = frames.length;
                 customCols.value = availableGrids[0].c;
                 customRows.value = availableGrids[0].r;
@@ -353,7 +314,6 @@
 
     function updateRenderLogic() {
         if (currentFrames.length === 0) return;
-
         let selectedGrid;
 
         if (isCustomMode) {
@@ -361,25 +321,17 @@
             const r = parseInt(customRows.value) || 1;
             const capacity = c * r;
             const total = currentFrames.length;
-            
             let diff = capacity - total;
             let msg = `Grid Capacity: ${capacity} slots. `;
-            
-            if (diff >= 0) {
-                msg += `<span class='good-text'>Perfect (Padding: ${diff})</span>`;
-            } else {
-                msg += `<span class='warn-text'>Warning: Cuts last ${Math.abs(diff)} frames!</span>`;
-            }
+            if (diff >= 0) msg += `<span class='good-text'>Perfect (Padding: ${diff})</span>`;
+            else msg += `<span class='warn-text'>Warning: Cuts last ${Math.abs(diff)} frames!</span>`;
             gridCalcDisplay.innerHTML = msg;
-
             let framesToUse = Math.min(total, capacity);
             selectedGrid = { c: c, r: r, usedFrames: framesToUse };
-
         } else {
             const index = gridSelect.value;
             selectedGrid = availableGrids[index];
         }
-
         renderWithGrid(selectedGrid);
     }
 
@@ -390,36 +342,26 @@
 
         frameOptions.forEach(targetCount => {
             if (targetCount < 1) return;
-            
             for (let c = 1; c <= 12; c++) {
                 let r = Math.ceil(targetCount / c);
                 let totalSlots = c * r;
                 let waste = totalSlots - targetCount;
-
                 if (waste <= 8) {
                     let cellW = 1024 / c;
                     let cellH = 1024 / r;
                     let cellRatio = cellW / cellH;
                     let shapeDiff = Math.abs(imgRatio - cellRatio);
-                    
                     let score = (waste * 1.5) + (shapeDiff * 5); 
                     if (targetCount < count) score += 2;
-
                     let label = `${c} x ${r}`;
                     if (c > r) label += " - Horizontal";
                     else if (r > c) label += " - Vertical";
                     else label += " - Square";
-
                     if (targetCount < count) label += " (-1 Frame)";
-
-                    candidates.push({ 
-                        c: c, r: r, usedFrames: targetCount, 
-                        score: score, label: label 
-                    });
+                    candidates.push({ c: c, r: r, usedFrames: targetCount, score: score, label: label });
                 }
             }
         });
-
         candidates.sort((a, b) => a.score - b.score);
         if (candidates.length > 0) candidates[0].label = "★ " + candidates[0].label;
         return candidates;
@@ -444,8 +386,20 @@
         const framesToRender = currentFrames.slice(0, safeUsedFrames);
         const count = framesToRender.length;
         
-        const delay = currentFrames[0].frameInfo.delay || 10;
-        const fps = Math.round(100 / delay);
+        // --- FPS CALCULATION FIX ---
+        // Pega o delay em cs (1/100s). Ex: 10cs = 100ms
+        let delay = currentFrames[0].frameInfo.delay || 10;
+        
+        // Correção de navegador: delays < 2 (20ms) costumam ser bugados ou rápidos demais
+        if (delay < 2) delay = 10; 
+
+        let fps = Math.round(100 / delay);
+
+        // CLAMP PARA SECOND LIFE
+        // Se o FPS calculado for maior que 20, forçamos para um padrão seguro (15 ou 10)
+        // Isso evita que o GIF fique "acelerado" no jogo.
+        if (fps > 20) fps = 15;
+        if (fps <= 0) fps = 10;
 
         outputCanvas.width = targetSize;
         outputCanvas.height = targetSize;
@@ -453,6 +407,12 @@
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.clearRect(0, 0, targetSize, targetSize);
+
+        // BACKGROUND FIX (Preto Sólido para evitar Ghosting)
+        if (forceBg.checked) {
+            ctx.fillStyle = "#000000"; 
+            ctx.fillRect(0, 0, targetSize, targetSize);
+        }
 
         const cellW = targetSize / grid.c;
         const cellH = targetSize / grid.r;
@@ -468,7 +428,6 @@
         if (totalSlots > count && count > 0) {
             const lastFrame = framesToRender[count - 1];
             const lastImg = lastFrame.getImage();
-            
             for (let i = count; i < totalSlots; i++) {
                 const x = (i % grid.c) * cellW;
                 const y = Math.floor(i / grid.c) * cellH;
