@@ -7,6 +7,7 @@
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
         body { 
@@ -17,6 +18,28 @@
             padding: 20px; 
             margin: 0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- LOCK SCREEN STYLES --- */
+        #lockedScreen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            text-align: center;
+            color: #d9534f;
+        }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
+
+        /* --- MAIN APP (Hidden by default) --- */
+        #appContent {
+            display: none; 
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -44,7 +67,6 @@
             padding-bottom: 0;
         }
 
-        /* --- HEADER CREDITS STYLE --- */
         .header-credits {
             font-size: 0.75em;
             color: #666;
@@ -53,9 +75,8 @@
             overflow: hidden;
             text-overflow: ellipsis; 
         }
-        /* Style for the "Buy here" link */
         .header-credits a {
-            color: #fff; /* WHITE color for highlight */
+            color: #fff; 
             font-weight: bold;
             text-decoration: none;
             border-bottom: 1px dotted #fff;
@@ -67,173 +88,83 @@
             border-bottom: 1px solid #ccc;
         }
 
-        /* --- TABS NAVIGATION --- */
-        .tabs {
-            display: flex;
-            justify-content: center;
-            border-bottom: 1px solid #333;
-            margin-bottom: 30px;
-        }
-
+        /* TABS */
+        .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
         .tab-btn {
-            background: none;
-            border: none;
-            color: #666;
-            padding: 15px 30px;
-            font-size: 16px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
             border-bottom: 2px solid transparent;
         }
-
         .tab-btn:hover { color: #fff; }
-        
-        .tab-btn.active {
-            color: #fff;
-            border-bottom: 2px solid #eee;
-            font-weight: bold;
-        }
+        .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
 
-        /* --- CONTENT SECTIONS --- */
+        /* CONTENT */
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- COMMON ELEMENTS --- */
+        /* INPUTS */
         input[type=file] { display: none; }
-
         .custom-file-upload {
-            border: 1px solid #444;
-            display: inline-block;
-            padding: 12px 24px;
-            cursor: pointer;
-            background-color: #222;
-            color: #fff;
-            border-radius: 4px;
-            transition: all 0.3s;
-            margin: 20px 0;
-            min-width: 250px;
+            border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer;
+            background-color: #222; color: #fff; border-radius: 4px; transition: all 0.3s;
+            margin: 20px 0; min-width: 250px;
         }
-
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        /* Standard Black Button Style (FIXED WIDTH) */
+        /* BUTTONS */
         button.action-btn { 
-            background-color: #000; 
-            color: white; 
-            padding: 15px 0; 
-            border: 1px solid #444; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-            width: 240px; 
-            margin: 10px;
+            background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; 
+            border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase;
+            letter-spacing: 1px; transition: all 0.3s; width: 240px; margin: 10px;
         }
-
         button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
         button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
 
+        /* UTILS */
         .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
         .highlight-success { color: #eee; font-weight: bold; } 
         .highlight-warning { color: #FFD700; font-weight: bold; font-size: 0.8em; }
         .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
 
-        /* PROGRESS BAR STYLES */
+        /* PROGRESS BAR */
         .progress-container {
-            width: 100%;
-            max-width: 600px;
-            background-color: #333;
-            border-radius: 10px;
-            margin: 15px auto;
-            height: 20px;
-            overflow: hidden;
-            display: none; 
-            position: relative;
+            width: 100%; max-width: 600px; background-color: #333; border-radius: 10px;
+            margin: 15px auto; height: 20px; overflow: hidden; display: none; position: relative;
         }
-
         .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: #eee; 
-            transition: width 0.3s ease;
-            text-align: center;
-            line-height: 20px;
-            color: #000;
-            font-size: 12px;
-            font-weight: bold;
+            height: 100%; width: 0%; background-color: #eee; transition: width 0.3s ease;
+            text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold;
         }
 
-        /* --- GIF TOOL SPECIFIC --- */
-        .instruction-text {
-            color: #777;
-            margin: 10px auto;
-            font-size: 0.9em;
-            line-height: 1.5;
-            display: none;
-            max-width: 600px;
-        }
-        
-        /* Canvas Styles */
+        /* INSTRUCTIONS & CANVAS */
+        .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
         canvas { 
-            max-width: 100%; 
-            border: 1px solid #333; 
-            margin-top: 20px; 
+            max-width: 100%; border: 1px solid #333; margin-top: 20px; 
             background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
             display: none; 
         }
-        
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
         
-        /* Placeholder Style */
-        #placeholderContainer {
-            margin-top: 30px;
-            transition: 0.3s;
-        }
-        #placeholderContainer img {
-            max-width: 150px;
-        }
+        #placeholderContainer { margin-top: 30px; transition: 0.3s; }
+        #placeholderContainer img { max-width: 150px; }
         
-        /* --- VIDEO TOOL SPECIFIC --- */
+        /* CONTROLS */
         .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 20px auto;
-            text-align: left;
-            background: #222;
-            padding: 15px;
-            border-radius: 5px;
-            max-width: 600px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto;
+            text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px;
         }
         .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
-        .control-group input, .control-group select {
-            width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;
-        }
+        .control-group input, .control-group select { width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; }
         #videoPreviewContainer img { max-width: 100%; border: 1px solid #444; margin-top: 15px; }
         
-        .result-actions {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
+        .result-actions { display: flex; justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
         .download-link-btn {
              background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; 
              border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase;
              letter-spacing: 1px; transition: all 0.3s; text-decoration: none; display: inline-block;
-             width: 240px; 
-             margin: 10px;
+             width: 240px; margin: 10px;
         }
         .download-link-btn:hover { background-color: #fff; color: #000; }
 
@@ -242,85 +173,110 @@
 </head>
 <body>
 
-<div class="main-container">
-    <h1>MMC - SL Gif Creator</h1>
-    
-    <div class="header-credits">
-        MMC - Secondlife gif generator created by Saori Suki. You need the script to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
+    <div id="lockedScreen">
+        <h2>Access Denied</h2>
+        <p>You need to use the in-world object to access this tool.</p>
+        <p style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
-        <button class="tab-btn" onclick="openTab('tabVideo', event)">Video to GIF</button>
-    </div>
-
-    <div id="tabGif" class="tab-content active">
-        <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
-
-        <label for="gifInput" class="custom-file-upload">Select GIF File</label>
-        <input type="file" id="gifInput" accept="image/gif">
+    <div id="appContent" style="display: none;">
         
-        <div id="gifProgressContainer" class="progress-container">
-            <div id="gifProgressBar" class="progress-bar">0%</div>
-        </div>
-
-        <div id="gifStatus" class="status-msg">Waiting for file...</div>
-        <div id="gifInstruction" class="instruction-text"></div>
-        
-        <div id="placeholderContainer">
-            <img src="bobonchik-spin-sp.gif" alt="Welcome">
-            <p style="font-size: 0.8em; margin-top: 10px; color: #444;">Ready to create!</p>
-        </div>
-
-        <canvas id="outputCanvas"></canvas>
-        
-        <div id="gifResultsArea">
-            <button id="btn1024" class="action-btn">Download<br>1024 x 1024</button>
-            <button id="btn2048" class="action-btn">Download<br>2048 x 2048</button>
-            <button id="btnGifReset" class="action-btn" onclick="resetGifTool()">Start Over</button>
-        </div>
-    </div>
-
-    <div id="tabVideo" class="tab-content">
-        <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
-
-        <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
-        <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg">
-
-        <div class="controls-grid">
-            <div class="control-group">
-                <label>Start (Sec)</label>
-                <input type="number" id="startTime" value="0" min="0" step="0.5">
+        <div class="main-container">
+            <h1>MMC - SL Gif Creator</h1>
+            
+            <div class="header-credits">
+                MMC - Secondlife gif generator created by Saori Suki. You need the script to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
             </div>
-            <div class="control-group">
-                <label>Duration (Sec)</label>
-                <input type="number" id="duration" value="2" min="0.5" max="10" step="0.5">
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
+                <button class="tab-btn" onclick="openTab('tabVideo', event)">Video to GIF</button>
             </div>
-            <div class="control-group">
-                <label>Max Width / Quality</label>
-                <select id="resolution">
-                    <option value="300">Small (300px)</option>
-                    <option value="600" selected>Medium (600px)</option>
-                    <option value="1024">HD (1024px)</option>
-                    <option value="original">⚠ ORIGINAL (Heavy)</option>
-                </select>
+
+            <div id="tabGif" class="tab-content active">
+                <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
+                <label for="gifInput" class="custom-file-upload">Select GIF File</label>
+                <input type="file" id="gifInput" accept="image/gif">
+                <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
+                <div id="gifStatus" class="status-msg">Waiting for file...</div>
+                <div id="gifInstruction" class="instruction-text"></div>
+                <div id="placeholderContainer">
+                    <img src="bobonchik-spin-sp.gif" alt="Welcome">
+                    <p style="font-size: 0.8em; margin-top: 10px; color: #444;">Ready to create!</p>
+                </div>
+                <canvas id="outputCanvas"></canvas>
+                <div id="gifResultsArea">
+                    <button id="btn1024" class="action-btn">Download<br>1024 x 1024</button>
+                    <button id="btn2048" class="action-btn">Download<br>2048 x 2048</button>
+                    <button id="btnGifReset" class="action-btn" onclick="resetGifTool()">Start Over</button>
+                </div>
+            </div>
+
+            <div id="tabVideo" class="tab-content">
+                <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
+                <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
+                <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg">
+                <div class="controls-grid">
+                    <div class="control-group"><label>Start (Sec)</label><input type="number" id="startTime" value="0" min="0" step="0.5"></div>
+                    <div class="control-group"><label>Duration (Sec)</label><input type="number" id="duration" value="2" min="0.5" max="10" step="0.5"></div>
+                    <div class="control-group">
+                        <label>Max Width / Quality</label>
+                        <select id="resolution">
+                            <option value="300">Small (300px)</option>
+                            <option value="600" selected>Medium (600px)</option>
+                            <option value="1024">HD (1024px)</option>
+                            <option value="original">⚠ ORIGINAL (Heavy)</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="convertVideoBtn" class="action-btn" style="width: 100%; max-width: 600px;" disabled>2. Convert to GIF</button>
+                <div id="videoProgressContainer" class="progress-container"><div id="videoProgressBar" class="progress-bar">0%</div></div>
+                <div id="videoStatus" class="status-msg">Waiting for video...</div>
+                <div id="videoPreviewContainer"></div>
             </div>
         </div>
-
-        <button id="convertVideoBtn" class="action-btn" style="width: 100%; max-width: 600px;" disabled>2. Convert to GIF</button>
-        
-        <div id="videoProgressContainer" class="progress-container">
-            <div id="videoProgressBar" class="progress-bar">0%</div>
-        </div>
-
-        <div id="videoStatus" class="status-msg">Waiting for video...</div>
-        <div id="videoPreviewContainer"></div>
     </div>
-
-</div>
 
 <script>
-    // --- TAB LOGIC ---
+    // ==========================================================
+    // SECURITY CHECK (TOKEN VERIFICATION)
+    // ==========================================================
+    
+    // 🔴 ESTA SENHA TEM QUE SER A MESMA NO SCRIPT LSL!
+    const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
+
+    function checkAccess() {
+        const params = new URLSearchParams(window.location.search);
+        const userUUID = params.get('id');
+        const urlToken = params.get('token');
+
+        if (!userUUID || !urlToken) {
+            console.log("Access Denied: Missing parameters.");
+            return; // Stay locked
+        }
+
+        // 1. Recalculate the Token using the same Secret Key
+        // Logic: MD5( UUID + SECRET )
+        const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY).toString();
+
+        // 2. Compare calculated token with the one in the URL
+        if (urlToken === calculatedToken) {
+            // SUCCESS: Signature Matches!
+            document.getElementById('lockedScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'flex';
+        } else {
+            // DENIED: Signature Failed (User tried to edit UUID)
+            console.log("Access Denied: Invalid Token Signature.");
+        }
+    }
+
+    // Run check immediately
+    checkAccess();
+
+    // ==========================================================
+    // APP LOGIC
+    // ==========================================================
+
     function openTab(tabName, evt) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -328,9 +284,7 @@
         if(evt) evt.currentTarget.classList.add('active');
     }
 
-    // ==========================================================
-    // LOGIC: GIF TO TEXTURE
-    // ==========================================================
+    // --- GIF TO TEXTURE ---
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const gifInstruction = document.getElementById('gifInstruction');
@@ -341,34 +295,24 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
-    
     let gifData = { cols: 4, rows: 4, fps: 15 };
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
-
-        // Reset UI for new load
         resetGifUiState();
-        
-        // Hide placeholder during processing
         placeholderContainer.style.display = 'none';
-
         gifStatus.innerText = "Loading file...";
         gifProgressContainer.style.display = 'block';
         updateGifProgress(20, "Loading...");
-
         const reader = new FileReader();
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
             const dataUrl = event.target.result;
-            
             gifFrames({ url: dataUrl, frames: 'all', outputType: 'canvas' })
             .then(function (frameData) {
                 updateGifProgress(80, "Drawing texture...");
-                setTimeout(() => {
-                     processGifData(frameData);
-                }, 100);
+                setTimeout(() => { processGifData(frameData); }, 100);
             })
             .catch(function (err) {
                 gifStatus.innerText = "Error parsing GIF: " + err;
@@ -392,53 +336,35 @@
             placeholderContainer.style.display = 'block';
             return;
         }
-
         const width = frames[0].frameInfo.width;
         const height = frames[0].frameInfo.height;
         const cols = Math.ceil(Math.sqrt(len));
         const rows = Math.ceil(len / cols);
-        
         let delay = frames[0].frameInfo.delay;
         const fps = delay > 0 ? Math.round(100 / delay) : 15;
-
         gifData = { cols: cols, rows: rows, fps: fps };
         const suffixExample = `_${cols}_${rows}_${fps}`;
-
-        // Finalize Progress
+        
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
-
-        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         
+        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         gifInstruction.style.display = 'block';
-        gifInstruction.innerHTML = `
-            File name format: <span class="file-name-style">YOURNAME${suffixExample}.png</span><br>
-            <span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>
-        `;
-
-        // Draw Canvas
+        gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffixExample}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
+        
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
-        
-        // IMPORTANT: Disable image smoothing for sharper textures and better colors
         ctx.imageSmoothingEnabled = false;
-        
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
         frames.forEach(function (frame, i) {
             const col = i % cols;
             const row = Math.floor(i / cols);
             ctx.drawImage(frame.getImage(), col * width, row * height);
         });
-
-        // HIDE PLACEHOLDER, SHOW CANVAS
         placeholderContainer.style.display = 'none';
         outputCanvas.style.display = 'block';
-
-        // Show buttons
         gifResultsArea.style.display = 'flex';
-        
         btn1024.onclick = () => downloadResized(1024);
         btn2048.onclick = () => downloadResized(2048);
     }
@@ -448,12 +374,8 @@
         tempCanvas.width = size;
         tempCanvas.height = size;
         const tCtx = tempCanvas.getContext('2d');
-        
-        // Ensure smoothing is disabled for resized download too
         tCtx.imageSmoothingEnabled = false;
-        
         tCtx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
-        
         const finalName = `MMC_GIF_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
         const link = document.createElement('a');
         link.download = finalName;
@@ -466,7 +388,6 @@
         gifResultsArea.style.display = 'none';
         outputCanvas.height = 0;
         outputCanvas.style.display = 'none'; 
-        
         gifProgressBar.style.width = '0%';
         gifProgressContainer.style.display = 'none';
     }
@@ -474,21 +395,17 @@
     function resetGifTool() {
         resetGifUiState();
         placeholderContainer.style.display = 'block';
-        
         gifStatus.innerText = "Waiting for file...";
         gifInput.value = ""; 
     }
 
-    // ==========================================================
-    // LOGIC: VIDEO TO GIF
-    // ==========================================================
+    // --- VIDEO TO GIF ---
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
     const videoStatus = document.getElementById('videoStatus');
     const videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const videoProgressContainer = document.getElementById('videoProgressContainer');
     const videoProgressBar = document.getElementById('videoProgressBar');
-    
     let uploadedVideo = null;
 
     videoInput.addEventListener('change', function(e) {
@@ -502,79 +419,53 @@
 
     convertVideoBtn.addEventListener('click', function() {
         if (!uploadedVideo) return;
-
         convertVideoBtn.disabled = true;
         videoStatus.innerText = "Processing...";
         videoPreviewContainer.innerHTML = "";
-        
         videoProgressContainer.style.display = 'block';
         videoProgressBar.style.width = '0%';
         videoProgressBar.innerText = '0%';
-
+        
         const start = parseFloat(document.getElementById('startTime').value);
         const dur = parseFloat(document.getElementById('duration').value);
         const resolutionValue = document.getElementById('resolution').value;
-
         const tempVideo = document.createElement('video');
         tempVideo.src = URL.createObjectURL(uploadedVideo);
         
         tempVideo.onloadedmetadata = function() {
             let finalW, finalH;
-
             if (resolutionValue === "original") {
-                finalW = this.videoWidth;
-                finalH = this.videoHeight;
+                finalW = this.videoWidth; finalH = this.videoHeight;
                 videoStatus.innerHTML += "<br><span class='highlight-warning'>Using Original Size: " + finalW + "x" + finalH + "</span>";
             } else {
                 const desiredWidth = parseInt(resolutionValue);
                 const aspectRatio = this.videoHeight / this.videoWidth;
-                finalW = desiredWidth;
-                finalH = Math.round(desiredWidth * aspectRatio);
+                finalW = desiredWidth; finalH = Math.round(desiredWidth * aspectRatio);
             }
-
             gifshot.createGIF({
-                video: [tempVideo.src],
-                gifWidth: finalW,
-                gifHeight: finalH, 
-                interval: 0.1,
-                numFrames: 10 * dur,
-                offset: start,
-                text: '',
+                video: [tempVideo.src], gifWidth: finalW, gifHeight: finalH, 
+                interval: 0.1, numFrames: 10 * dur, offset: start, text: '',
                 progressCallback: function(captureProgress) {
                     const percent = Math.round(captureProgress * 100);
-                    videoProgressBar.style.width = percent + '%';
-                    videoProgressBar.innerText = percent + '%';
+                    videoProgressBar.style.width = percent + '%'; videoProgressBar.innerText = percent + '%';
                 }
             }, function(obj) {
                 videoProgressContainer.style.display = 'none';
-
                 if(!obj.error) {
                     const image = obj.image;
                     videoStatus.innerHTML = `<span class="highlight-success">✔ Conversion Complete!</span>`;
-                    
                     const imgElement = document.createElement('img');
                     imgElement.src = image;
                     videoPreviewContainer.appendChild(imgElement);
-
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'result-actions';
-
                     const dlLink = document.createElement('a');
-                    dlLink.href = image;
-                    dlLink.download = "converted_video.gif";
-                    dlLink.innerText = "Download GIF";
-                    dlLink.className = "download-link-btn";
-                    
+                    dlLink.href = image; dlLink.download = "converted_video.gif";
+                    dlLink.innerText = "Download GIF"; dlLink.className = "download-link-btn";
                     const clearBtn = document.createElement('button');
-                    clearBtn.innerText = "Start Over";
-                    clearBtn.className = "action-btn"; 
-                    clearBtn.onclick = function() {
-                        resetVideoTool();
-                    };
-
-                    actionsDiv.appendChild(dlLink);
-                    actionsDiv.appendChild(clearBtn);
-                    
+                    clearBtn.innerText = "Start Over"; clearBtn.className = "action-btn"; 
+                    clearBtn.onclick = function() { resetVideoTool(); };
+                    actionsDiv.appendChild(dlLink); actionsDiv.appendChild(clearBtn);
                     videoPreviewContainer.appendChild(actionsDiv);
                 } else {
                     videoStatus.innerText = "Error: " + obj.errorCode + " (Try reducing duration if size is Original)";
