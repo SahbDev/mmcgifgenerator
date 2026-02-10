@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator (DEBUG MODE)</title>
+    <title>MMC - SL Gif Creator</title>
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
@@ -12,100 +12,84 @@
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #111; 
-            color: #eee; 
-            text-align: center; 
-            padding: 20px; 
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: #111; color: #eee; text-align: center; 
+            padding: 20px; margin: 0; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- DEBUG SCREEN --- */
         #lockedScreen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 90vh;
-            text-align: center;
-            color: #d9534f;
-            max-width: 800px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 80vh; text-align: center; color: #d9534f;
         }
-        .lock-screen-gif {
-            max-width: 100px;
-            margin-bottom: 20px;
-        }
-        #debugInfo {
-            background: #222;
-            color: #ffeb3b; /* Amarelo */
-            font-family: monospace;
-            padding: 20px;
-            border: 1px solid #555;
-            border-radius: 5px;
-            text-align: left;
-            margin-top: 20px;
-            font-size: 0.9em;
-            word-break: break-all;
+        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
+
+        #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+        .main-container { 
+            width: 100%; max-width: 900px; background: #1a1a1a; 
+            padding: 30px; border-radius: 8px; border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 600px; margin-bottom: 40px; 
         }
 
-        /* --- APP (Hidden) --- */
-        #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 900px; background: #1a1a1a; padding: 30px; border-radius: 8px; border: 1px solid #333; min-height: 600px; margin-bottom: 40px; }
-        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
-        
+        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
         .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
 
-        /* TABS & UI */
         .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
-        .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: 0.3s; border-bottom: 2px solid transparent; }
+        .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab-btn:hover { color: #fff; }
         .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        input[type=file] { display: none; }
-        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; }
-        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; }
-        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
-        button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; }
+        .tab-content { display: none; animation: fadeIn 0.5s; } .tab-content.active { display: block; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; }
-        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
-        #placeholderContainer { margin-top: 30px; } #placeholderContainer img { max-width: 150px; }
+        input[type=file] { display: none; }
+        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
+        .custom-file-upload:hover { background-color: #333; border-color: #666; }
+
+        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
+        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
+        button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
+
+        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
+        .highlight-success { color: #eee; font-weight: bold; } 
+        .highlight-warning { color: #FFD700; font-weight: bold; font-size: 0.8em; }
+        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
+        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
+
+        .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
+        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%); background-size: 20px 20px; }
         
-        /* Video Tools */
+        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+        #placeholderContainer { margin-top: 30px; transition: 0.3s; } #placeholderContainer img { max-width: 150px; }
+        
         .controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px; }
         .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
         .control-group input, .control-group select { width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; }
         #videoPreviewContainer img { max-width: 100%; border: 1px solid #444; margin-top: 15px; }
-        .result-actions { display: flex; justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
-        .download-link-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; text-decoration: none; display: inline-block; width: 240px; margin: 10px; }
         
-        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
-        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; }
+        .result-actions { display: flex; justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
+        .download-link-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; text-decoration: none; display: inline-block; width: 240px; margin: 10px; transition: 0.3s; }
+        .download-link-btn:hover { background-color: #fff; color: #000; }
     </style>
 </head>
 <body>
 
     <div id="lockedScreen">
         <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
-        <h2>Access Denied</h2>
-        
-        <div id="debugInfo">
-            CARREGANDO DADOS...<br>
-            Se esta mensagem não mudar, o Javascript falhou.
-        </div>
+        <h2 id="lockTitle">Access Denied</h2>
+        <p>You need to use the in-world object to access this tool.</p>
+        <p id="lockReason" style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
     </div>
 
-    <div id="appContent">
+    <div id="appContent" style="display: none;">
         <div class="main-container">
             <h1>MMC - SL Gif Creator</h1>
             <div class="header-credits">
                 MMC - Secondlife gif generator created by Saori Suki. You need the script to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
             </div>
+
             <div class="tabs">
                 <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
                 <button class="tab-btn" onclick="openTab('tabVideo', event)">Video to GIF</button>
@@ -117,6 +101,7 @@
                 <input type="file" id="gifInput" accept="image/gif">
                 <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
                 <div id="gifStatus" class="status-msg">Waiting for file...</div>
+                <div id="gifInstruction" class="instruction-text"></div>
                 <div id="placeholderContainer">
                     <img src="bobonchik-spin-sp.gif" alt="Welcome">
                     <p style="font-size: 0.8em; margin-top: 10px; color: #444;">Ready to create!</p>
@@ -127,7 +112,6 @@
                     <button id="btn2048" class="action-btn">Download<br>2048 x 2048</button>
                     <button id="btnGifReset" class="action-btn" onclick="resetGifTool()">Start Over</button>
                 </div>
-                <div id="gifInstruction" style="display:none; color:#777; margin-top:10px;"></div>
             </div>
 
             <div id="tabVideo" class="tab-content">
@@ -157,67 +141,69 @@
 
 <script>
     // ==========================================================
-    // DIAGNOSTIC SECURITY CHECK
+    // SECURITY: ONE-TIME LINK & EXPIRATION
     // ==========================================================
     
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
+    const LINK_EXPIRATION_MINUTES = 2; // Link válido por 2 minutos apenas
 
     function checkAccess() {
         const params = new URLSearchParams(window.location.search);
         const userUUID = params.get('id');
         const urlToken = params.get('token');
-        const debugBox = document.getElementById('debugInfo');
+        const timestamp = params.get('ts'); 
+        const lockReason = document.getElementById('lockReason');
 
-        // 1. Verifica Parâmetros Básicos
-        if (!userUUID || !urlToken) {
-            debugBox.innerHTML = `
-                <strong>ERRO: Link Incompleto!</strong><br><br>
-                UUID Recebido: ${userUUID || "Nenhum"}<br>
-                Token Recebido: ${urlToken || "Nenhum"}<br><br>
-                Certifique-se de usar o objeto no Second Life para gerar o link.
-            `;
+        // 1. DADOS INCOMPLETOS
+        if (!userUUID || !urlToken || !timestamp) {
+            console.log("Denied: Missing parameters.");
+            lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
 
-        // 2. Calcula o Token Esperado (Com a correção do :0)
-        // O LSL faz MD5("UUID" + "KEY" + ":0")
-        const stringToHash = userUUID + SECRET_KEY + ":0";
-        const calculatedToken = CryptoJS.MD5(stringToHash).toString();
+        // 2. USO ÚNICO (AUTO-DESTRUIÇÃO NO NAVEGADOR)
+        // Verifica se este token já foi salvo no LocalStorage deste navegador
+        const storageKey = "used_token_" + urlToken;
+        if (localStorage.getItem(storageKey)) {
+             console.log("Denied: Token already used.");
+             lockReason.innerText = "Error: This link has already been used. Please generate a new one.";
+             return;
+        }
 
-        // 3. Exibe o diagnóstico na tela
-        let message = `<strong>DIAGNÓSTICO DO ERRO:</strong><br><br>`;
-        message += `Seu UUID: ${userUUID}<br>`;
-        message += `Senha usada: ${SECRET_KEY}<br>`;
-        message += `---------------------------------<br>`;
-        message += `Token que veio no Link: <br><span style="color:#fff">${urlToken}</span><br>`;
-        message += `Token que o Site calculou: <br><span style="color:#fff">${calculatedToken}</span><br>`;
-        message += `---------------------------------<br>`;
+        // 3. VERIFICAÇÃO DE TEMPO (EXPIRAÇÃO)
+        const linkTime = parseInt(timestamp) * 1000;
+        const now = new Date().getTime();
+        const diffMinutes = (now - linkTime) / 1000 / 60;
+
+        if (diffMinutes > LINK_EXPIRATION_MINUTES) {
+            console.log("Denied: Time expired.");
+            lockReason.innerText = "Error: Link expired (Time limit exceeded). Generate a new one.";
+            return;
+        }
+
+        // 4. VERIFICAÇÃO DE ASSINATURA (HASH)
+        // MD5(UUID + TIMESTAMP + KEY + ":0")
+        const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
+        const calculatedToken = CryptoJS.MD5(stringToHash).toString();
 
         if (urlToken === calculatedToken) {
             // SUCESSO!
+            // Marca o token como usado IMEDIATAMENTE
+            localStorage.setItem(storageKey, "true");
+
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
-            // FALHA
-            message += `<span style="color:red; font-weight:bold;">OS TOKENS NÃO BATEM!</span><br><br>`;
-            message += `Motivos prováveis:<br>`;
-            message += `1. Você está usando um link antigo (gere um novo).<br>`;
-            message += `2. A 'SECRET_KEY' no script LSL está diferente da senha aqui.<br>`;
-            message += `3. O cache do navegador está segurando uma versão antiga do site.<br>`;
-            message += `<br>Tente limpar o cache (CTRL + F5) e gere um novo link.`;
-            
-            debugBox.innerHTML = message;
+            console.log("Denied: Bad Signature.");
+            lockReason.innerText = "Error: Security Token Mismatch.";
         }
     }
 
-    // Roda a checagem
     checkAccess();
 
-
     // ==========================================================
-    // APP LOGIC
+    // APP LOGIC (REST OF THE CODE)
     // ==========================================================
-
     function openTab(tabName, evt) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -225,7 +211,6 @@
         if(evt) evt.currentTarget.classList.add('active');
     }
 
-    // GIF Logic
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const gifInstruction = document.getElementById('gifInstruction');
@@ -254,7 +239,7 @@
                 updateGifProgress(80, "Drawing texture...");
                 setTimeout(() => { processGifData(frameData); }, 100);
             }).catch(err => {
-                gifStatus.innerText = "Error: " + err;
+                gifStatus.innerText = "Error parsing GIF: " + err;
                 gifProgressContainer.style.display = 'none';
                 placeholderContainer.style.display = 'block'; 
             });
@@ -273,19 +258,15 @@
         
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
-        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> ${cols}x${rows} | ${fps} FPS`;
-        
+        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         const suffix = `_${cols}_${rows}_${fps}`;
         gifInstruction.style.display = 'block';
-        gifInstruction.innerHTML = `Name: <span class="file-name-style">NAME${suffix}.png</span> (Keep numbers!)`;
-
+        gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffix}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
         outputCanvas.width = cols * w; outputCanvas.height = rows * h;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        frames.forEach((f, i) => {
-            ctx.drawImage(f.getImage(), (i % cols) * w, Math.floor(i / cols) * h);
-        });
+        frames.forEach((f, i) => ctx.drawImage(f.getImage(), (i % cols) * w, Math.floor(i / cols) * h));
         placeholderContainer.style.display = 'none'; outputCanvas.style.display = 'block'; gifResultsArea.style.display = 'flex';
         btn1024.onclick = () => downloadResized(1024);
         btn2048.onclick = () => downloadResized(2048);
@@ -307,7 +288,6 @@
     }
     function resetGifTool() { resetGifUiState(); placeholderContainer.style.display = 'block'; gifStatus.innerText = "Waiting for file..."; gifInput.value = ""; }
 
-    // Video Logic
     const videoInput = document.getElementById('videoInput'), convertVideoBtn = document.getElementById('convertVideoBtn');
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const videoProgressContainer = document.getElementById('videoProgressContainer'), videoProgressBar = document.getElementById('videoProgressBar');
@@ -322,18 +302,12 @@
         if (!uploadedVideo) return;
         convertVideoBtn.disabled = true; videoStatus.innerText = "Processing..."; videoPreviewContainer.innerHTML = "";
         videoProgressContainer.style.display = 'block'; videoProgressBar.style.width = '0%';
-        
-        const start = parseFloat(document.getElementById('startTime').value);
-        const dur = parseFloat(document.getElementById('duration').value);
-        const resVal = document.getElementById('resolution').value;
-        const tempVideo = document.createElement('video');
-        tempVideo.src = URL.createObjectURL(uploadedVideo);
-        
+        const start = parseFloat(document.getElementById('startTime').value), dur = parseFloat(document.getElementById('duration').value), resVal = document.getElementById('resolution').value;
+        const tempVideo = document.createElement('video'); tempVideo.src = URL.createObjectURL(uploadedVideo);
         tempVideo.onloadedmetadata = function() {
             let finalW, finalH;
             if (resVal === "original") { finalW = this.videoWidth; finalH = this.videoHeight; }
             else { const dw = parseInt(resVal); finalW = dw; finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); }
-
             gifshot.createGIF({
                 video: [tempVideo.src], gifWidth: finalW, gifHeight: finalH, interval: 0.1, numFrames: 10 * dur, offset: start,
                 progressCallback: p => { const pc = Math.round(p * 100); videoProgressBar.style.width = pc + '%'; videoProgressBar.innerText = pc + '%'; }
@@ -344,13 +318,9 @@
                     const img = document.createElement('img'); img.src = obj.image; videoPreviewContainer.appendChild(img);
                     const actions = document.createElement('div'); actions.className = 'result-actions';
                     const dl = document.createElement('a'); dl.href = obj.image; dl.download = "video.gif"; dl.innerText = "Download GIF"; dl.className = "download-link-btn";
-                    const rst = document.createElement('button'); rst.innerText = "Start Over"; rst.className = "action-btn"; rst.onclick = () => {
-                         videoPreviewContainer.innerHTML = ""; videoStatus.innerText = "Waiting..."; videoInput.value = ""; uploadedVideo = null; convertVideoBtn.disabled = true;
-                    };
+                    const rst = document.createElement('button'); rst.innerText = "Start Over"; rst.className = "action-btn"; rst.onclick = () => { videoPreviewContainer.innerHTML = ""; videoStatus.innerText = "Waiting..."; videoInput.value = ""; uploadedVideo = null; convertVideoBtn.disabled = true; };
                     actions.append(dl, rst); videoPreviewContainer.append(actions);
-                } else {
-                    videoStatus.innerText = "Error: " + obj.errorCode; convertVideoBtn.disabled = false;
-                }
+                } else { videoStatus.innerText = "Error: " + obj.errorCode; convertVideoBtn.disabled = false; }
             });
         };
     });
