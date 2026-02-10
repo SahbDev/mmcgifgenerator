@@ -88,15 +88,13 @@
 
         .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
         
-        /* --- RESULTADOS (REAL TRANSPARENT - FUNDO DO SITE) --- */
+        /* --- RESULTADOS --- */
         canvas { 
             max-width: 100%; 
             border: 1px solid #333; 
             margin-top: 20px; 
             display: none; 
-            
-            /* Fundo Transparente Real */
-            background: transparent;
+            background: transparent; /* Fundo transparente real */
         }
 
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
@@ -282,7 +280,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. FERRAMENTA GIF -> TEXTURE (COM CORREÇÃO DE BUG DE TEXTURA)
+    // 2. FERRAMENTA GIF -> TEXTURE (COM CORREÇÃO DE PREENCHIMENTO)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -310,7 +308,7 @@
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
             try {
-                // 'cumulative: true' mantém a correção do bug de textura
+                // cumulative: true para corrigir transparências bugadas
                 gifFrames({ 
                     url: event.target.result, 
                     frames: 'all', 
@@ -351,11 +349,23 @@
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
         
-        frames.forEach((f, i) => {
+        // CORREÇÃO: Preenche TODA a grade (grid), não apenas os frames existentes
+        // Se o GIF acabar, repete o último frame nos espaços vazios
+        const totalSlots = cols * rows;
+        const lastFrame = frames[frames.length - 1];
+
+        for (let i = 0; i < totalSlots; i++) {
             const x = (i % cols) * w;
             const y = Math.floor(i / cols) * h;
-            ctx.drawImage(f.getImage(), x, y);
-        });
+            
+            if (i < frames.length) {
+                // Desenha o frame normal
+                ctx.drawImage(frames[i].getImage(), x, y);
+            } else {
+                // Desenha o último frame para preencher o vazio (evita piscar no SL)
+                ctx.drawImage(lastFrame.getImage(), x, y);
+            }
+        }
         
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
