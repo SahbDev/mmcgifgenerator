@@ -74,7 +74,7 @@
 
         /* UI ELEMENTS */
         
-        /* CORREÇÃO CRÍTICA: Substituímos display:none por uma técnica que mantém o input acessível */
+        /* CORREÇÃO DO SELECT FILE (Visualmente Oculto em vez de Display None) */
         input[type=file] { 
             position: absolute;
             width: 1px;
@@ -84,12 +84,12 @@
             overflow: hidden;
             clip: rect(0,0,0,0);
             border: 0;
-            opacity: 0; /* Invisível mas clicável pelo label */
+            opacity: 0; 
         }
 
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px;
             cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s;
-            position: relative; z-index: 10; /* Garante que o botão fique clicável */
+            position: relative; z-index: 10; 
         }
         .custom-file-upload:hover { background-color: #333; border-color: #666;
         }
@@ -313,7 +313,7 @@
         const file = e.target.files[0];
         if (!file) return;
         
-        // UI Reset immediate
+        // UI Reset
         resetGifUiState();
         placeholderContainer.style.display = 'none';
         gifStatus.innerText = "Loading file...";
@@ -383,7 +383,7 @@
         resetGifUiState();
         placeholderContainer.style.display = 'block'; 
         gifStatus.innerText = "Waiting for file..."; 
-        gifInput.value = ""; // Garante limpeza via botão também
+        gifInput.value = ""; 
     }
 
     // ==========================================================
@@ -393,6 +393,20 @@
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const videoProgressContainer = document.getElementById('videoProgressContainer'), videoProgressBar = document.getElementById('videoProgressBar');
     let uploadedVideo = null;
+    let currentVideoBlobUrl = null; // Armazena URL temporaria para limpeza
+
+    // FUNCAO AUXILIAR PARA CORRIGIR O ERRO DE "HEAVY ORIGINAL"
+    // Converte a string Base64 gigante em um arquivo Blob leve
+    function dataURItoBlob(dataURI) {
+        var byteString = atob(dataURI.split(',')[1]);
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], {type: mimeString});
+    }
     
     videoInput.addEventListener('change', e => {
         uploadedVideo = e.target.files[0];
@@ -409,10 +423,12 @@
         videoProgressContainer.style.display = 'block'; videoProgressBar.style.width = '0%';
         const start = parseFloat(document.getElementById('startTime').value), dur = parseFloat(document.getElementById('duration').value), resVal = document.getElementById('resolution').value;
         const tempVideo = document.createElement('video'); tempVideo.src = URL.createObjectURL(uploadedVideo);
+        
         tempVideo.onloadedmetadata = function() {
             let finalW, finalH;
             if (resVal === "original") { finalW = this.videoWidth; finalH = this.videoHeight; }
             else { const dw = parseInt(resVal); finalW = dw; finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); }
+            
             gifshot.createGIF({
                 video: [tempVideo.src], gifWidth: finalW, gifHeight: finalH, interval: 0.1, numFrames: 10 * dur, offset: start,
                 progressCallback: p => { const pc = Math.round(p * 100);
@@ -422,10 +438,23 @@
                 videoProgressContainer.style.display = 'none';
                 if(!obj.error) {
                     videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
-                    const img = document.createElement('img'); img.src = obj.image; videoPreviewContainer.appendChild(img);
+                    
+                    // --- CORREÇÃO AQUI: Em vez de usar a string gigante, convertemos para BLOB ---
+                    const imgBlob = dataURItoBlob(obj.image);
+                    currentVideoBlobUrl = URL.createObjectURL(imgBlob);
+
+                    const img = document.createElement('img'); 
+                    img.src = currentVideoBlobUrl; 
+                    videoPreviewContainer.appendChild(img);
+
                     const actions = document.createElement('div'); actions.className = 'result-actions';
                     const dl = document.createElement('a');
-                    dl.href = obj.image; dl.download = "video.gif"; dl.innerText = "Download GIF"; dl.className = "download-link-btn";
+                    
+                    // Usa o URL curto do blob em vez da string gigante
+                    dl.href = currentVideoBlobUrl; 
+                    dl.download = "video.gif"; 
+                    dl.innerText = "Download GIF"; 
+                    dl.className = "download-link-btn";
                     
                     const rst = document.createElement('button');
                     rst.innerText = "Start Over"; 
@@ -440,6 +469,11 @@
     });
 
     function resetVideoTool() {
+        // Limpa memoria do navegador
+        if (currentVideoBlobUrl) {
+            URL.revokeObjectURL(currentVideoBlobUrl);
+            currentVideoBlobUrl = null;
+        }
         videoPreviewContainer.innerHTML = "";
         videoStatus.innerText = "Waiting for video...";
         videoInput.value = "";
