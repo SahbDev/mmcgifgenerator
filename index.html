@@ -129,10 +129,10 @@
                     </div>
 
                     <div class="control-group">
-                        <label>Rendering Mode (Fix for "Difference"):</label>
+                        <label>Rendering Logic (Fix Glitches):</label>
                         <select id="renderModeSelect" class="res-select" onchange="reprocessFile()">
-                            <option value="raw" selected>Raw (GDI+ Style) - Matches Original App</option>
-                            <option value="cumulative">Browser Default (Smoother)</option>
+                            <option value="raw" selected>Raw (GDI+ Clone) - Sharpest</option>
+                            <option value="cumulative">Browser Default (Smoothed)</option>
                         </select>
                     </div>
 
@@ -212,7 +212,7 @@
     checkAccess();
 
     // ==========================================
-    // 2. GIF LOGIC (GDI+ EMULATION MODE)
+    // 2. GIF LOGIC (V14 - PIXEL PERFECT RAW)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -223,7 +223,7 @@
     
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
-    const renderModeSelect = document.getElementById('renderModeSelect'); // NOVO
+    const renderModeSelect = document.getElementById('renderModeSelect'); 
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
@@ -258,9 +258,7 @@
         gifProgressBar.style.width = '10%';
         gifResultsArea.style.display = 'none';
 
-        // MODO DE EXTRAÇÃO:
-        // cumulative: true -> Comportamento de Navegador (suave, montado)
-        // cumulative: false -> Comportamento GDI+ C# (bruto, isolado)
+        // LÓGICA DE EXTRAÇÃO
         let isCumulative = (renderModeSelect.value === 'cumulative');
 
         gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: isCumulative })
@@ -277,7 +275,6 @@
         });
     }
 
-    // LÓGICA DE GRADE C# (ORIGINAL)
     function calculateGridLogic() {
         let frameCount = currentFrames.length;
         let num = Math.round(Math.sqrt(frameCount)); 
@@ -307,9 +304,7 @@
         btnDownload.innerText = "Processing...";
 
         setTimeout(() => {
-            // Pega dimensões do PRIMEIRO frame (Base)
-            // No modo RAW, frames seguintes podem ser menores (patches), mas o C# não lida com isso, 
-            // ele assume tamanho full. Se gif-frames entregar patch, precisamos desenhar offset.
+            // Pega dimensões do primeiro frame (Base)
             let baseImg = currentFrames[0].getImage();
             let width = baseImg.width;
             let height = baseImg.height;
@@ -317,6 +312,13 @@
             canvas.width = xFrames * width;
             canvas.height = yFrames * height;
             let ctx = canvas.getContext('2d');
+
+            // --- CONFIGURAÇÃO PARA EVITAR BUGS (Raw) ---
+            if (renderModeSelect.value === 'raw') {
+                ctx.imageSmoothingEnabled = false; // Desativa antialias (Pixel Perfect)
+            } else {
+                ctx.imageSmoothingEnabled = true;
+            }
 
             let num2 = currentFrames.length;
             if (num2 % 2 != 0) num2++; 
@@ -335,11 +337,15 @@
                         let posX = j * width;
                         let posY = i * height;
                         
+                        // LIMPEZA CRÍTICA: Apaga qualquer lixo anterior nessa célula
+                        // Isso resolve os "bugs" onde pedaços ficavam sujos
+                        ctx.clearRect(posX, posY, width, height);
+
                         let imgData = frameObj.getImage();
                         
-                        // CORREÇÃO DE OFFSET PARA MODO RAW
-                        // Se estivermos em modo Raw, gif-frames pode retornar apenas o "patch" que mudou.
-                        // Precisamos desenhar no lugar certo usando frameInfo.x e y.
+                        // OFFSET CORRECTION PARA MODO RAW
+                        // O C# recebe frame inteiro, mas gif-frames Raw entrega pedaços otimizados.
+                        // Usamos frameInfo para posicionar o pedaço no lugar certo.
                         let offX = frameObj.frameInfo.x || 0;
                         let offY = frameObj.frameInfo.y || 0;
 
@@ -349,12 +355,11 @@
                 }
             }
 
-            // --- REDIMENSIONAMENTO (C# LOGIC: NO DISTORTION) ---
+            // --- REDIMENSIONAMENTO (C# LOGIC) ---
             let targetMax = parseInt(resSelect.value); 
             let fullW = canvas.width;
             let fullH = canvas.height;
 
-            // Se for maior, reduz para o limite. Se for menor, MANTÉM.
             let finalW = (fullW > targetMax) ? targetMax : fullW;
             let finalH = (fullH > targetMax) ? targetMax : fullH;
             
@@ -365,6 +370,7 @@
                 tempCanvas.width = finalW; 
                 tempCanvas.height = finalH;
                 
+                // Qualidade Alta no Resize final
                 tCtx.imageSmoothingEnabled = true;
                 tCtx.imageSmoothingQuality = 'high';
                 tCtx.drawImage(canvas, 0, 0, finalW, finalH);
@@ -379,7 +385,7 @@
             link.download = finalFileName;
 
             if (!transparentChkbox.checked) {
-                // JPG
+                // JPG (Fundo Preto)
                 let compositeCanvas = document.createElement('canvas');
                 compositeCanvas.width = canvas.width;
                 compositeCanvas.height = canvas.height;
