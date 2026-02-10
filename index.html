@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator (Exact Clone)</title>
+    <title>MMC - SL Gif Creator</title>
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -21,40 +21,84 @@
         .main-container { 
             width: 100%; max-width: 900px; background: #1a1a1a; 
             padding: 30px; border-radius: 8px; border: 1px solid #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 500px;
             margin-bottom: 40px; 
         }
 
         h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
         
-        .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; }
-        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
-
-        .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
-        .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
-        .tab-btn:hover { color: #fff; }
-        .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
+        .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
+        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
+        .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
 
         input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
-        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
+        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 15px 30px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; display: inline-block; }
+        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
         button.action-btn:hover { background-color: #fff; color: #000; }
+
+        /* PAINEL DE CONTROLE */
+        .controls-panel {
+            background: #222; border: 1px solid #444; border-radius: 6px;
+            padding: 15px; margin-bottom: 20px; width: 100%; max-width: 600px;
+        }
+
+        .controls-row {
+            display: flex; justify-content: center; gap: 20px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap;
+        }
+        
+        .control-group { text-align: left; display: flex; flex-direction: column; }
+        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; }
+        
+        .res-select {
+            background-color: #333; color: #fff; padding: 8px; 
+            border: 1px solid #555; border-radius: 4px; 
+            font-size: 13px; cursor: pointer; width: 240px;
+        }
+
+        /* CUSTOM MODE STYLES */
+        .toggle-btn {
+            background: #333; border: 1px solid #666; color: #fff;
+            padding: 5px 15px; font-size: 0.8em; cursor: pointer; border-radius: 20px;
+            transition: 0.3s; margin-left: 10px;
+        }
+        .toggle-btn:hover { background: #555; }
+        .toggle-btn.active { background: #4a90e2; border-color: #4a90e2; }
+
+        .custom-inputs { display: none; align-items: center; gap: 10px; }
+        .small-input {
+            width: 50px; background: #111; border: 1px solid #555; color: #fff;
+            padding: 8px; text-align: center; border-radius: 4px; font-weight: bold;
+        }
+        
+        .grid-info { font-size: 0.85em; color: #888; margin-top: 5px; font-family: monospace; }
+        .warn-text { color: #e6b800; }
+        .good-text { color: #4CAF50; }
 
         .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
         .highlight-success { color: #eee; font-weight: bold; } 
-        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
         
+        /* PROGRESS BAR */
         .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
         .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
-
+        
         canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background: transparent; }
-        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; flex-direction: column; align-items: center; }
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
+        
+        .filename-display {
+            font-family: monospace; color: #aaa; background: #222;
+            padding: 8px 15px; border-radius: 4px; border: 1px solid #444;
+            margin-bottom: 5px; font-size: 0.9em;
+        }
+        
+        /* AVISO DE NOME */
+        .filename-warning {
+            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 400px; line-height: 1.4em;
+        }
 
-        /* --- LOCK SCREEN --- */
         #lockedScreen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; text-align: center; color: #d9534f; }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
     </style>
@@ -63,7 +107,7 @@
 
     <div id="lockedScreen">
         <h2>Access Denied</h2>
-        <p>You need to use your in-world HUD to generate your access link.</p>
+        <p>Use your in-world HUD to generate your access link.</p>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -71,20 +115,15 @@
             <h1>MMC - SL Gif Creator</h1>
   
             <div class="header-credits">
-                MMC - Secondlife gif generator created by Saori Suki.
-                You need the script to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
+                Created by Saori Suki. You need the script for the gif to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
             </div>
 
-            <div class="tabs">
-                <button class="tab-btn active">GIF to Texture</button>
-            </div>
-
-            <p style="color: #666;">Automatic High-Quality conversion for Second Life.</p>
+            <p style="color: #666;">Convert your GIF to TEXTURE below.</p>
             
             <label for="gifInput" class="custom-file-upload">Select GIF File</label>
             <input type="file" id="gifInput" accept="image/gif">
 
-            <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
+            <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar"></div></div>
             <div id="gifStatus" class="status-msg">Waiting for file...</div>
     
             <div id="placeholderContainer">
@@ -94,8 +133,60 @@
             <canvas id="outputCanvas"></canvas>
             
             <div id="gifResultsArea">
-                <button id="btn1024" class="action-btn">Download HD Texture</button>
-                <button class="action-btn" onclick="location.reload()">Start Over</button>
+                
+                <div class="controls-panel">
+                    
+                    <div class="controls-row">
+                        <div class="control-group">
+                            <label>Texture Quality / Cost:</label>
+                            <select id="resSelect" class="res-select" onchange="triggerUpdate()">
+                                <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
+                                <option value="2048">2048px (High) 50L$ Upload</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group" style="justify-content: flex-end;">
+                            <button id="toggleCustomBtn" class="toggle-btn" onclick="toggleCustomMode()">✎ Edit Grid Manually</button>
+                        </div>
+                    </div>
+
+                    <div class="controls-row">
+                        
+                        <div id="autoGridArea" class="control-group">
+                            <label>Smart Grid Suggestions:</label>
+                            <select id="gridSelect" class="res-select" onchange="triggerUpdate()">
+                                </select>
+                        </div>
+
+                        <div id="manualGridArea" class="control-group custom-inputs">
+                            <div>
+                                <label>Cols:</label>
+                                <input type="number" id="customCols" class="small-input" value="4" min="1" onchange="triggerUpdate()">
+                            </div>
+                            <div style="padding-top: 15px; color:#666;">x</div>
+                            <div>
+                                <label>Rows:</label>
+                                <input type="number" id="customRows" class="small-input" value="4" min="1" onchange="triggerUpdate()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="manualInfo" class="grid-info" style="display:none;">
+                        Original GIF: <strong id="origFramesDisplay" style="color:#eee">0</strong> frames.<br>
+                        <span id="gridCalcDisplay"></span>
+                    </div>
+
+                </div>
+
+                <div id="fileNameDisplay" class="filename-display">...</div>
+                
+                <div class="filename-warning">
+                    ⚠️ <b>IMPORTANT:</b> Do not rename your texture after the ".anim;...".<br>
+                    This part is required for the script to work properly.
+                </div>
+
+                <button id="btnDownload" class="action-btn">Download Texture</button>
+                <button class="action-btn" onclick="location.reload()" style="background: #222; width: 150px; margin-top: 5px;">Start Over</button>
             </div>
         </div>
     </div>
@@ -130,98 +221,243 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
-    let gifData = { cols: 1, rows: 1, fps: 15 };
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    
+    // Controles
+    const resSelect = document.getElementById('resSelect');
+    const gridSelect = document.getElementById('gridSelect');
+    const autoGridArea = document.getElementById('autoGridArea');
+    const manualGridArea = document.getElementById('manualGridArea');
+    const toggleCustomBtn = document.getElementById('toggleCustomBtn');
+    const manualInfo = document.getElementById('manualInfo');
+    const origFramesDisplay = document.getElementById('origFramesDisplay');
+    const gridCalcDisplay = document.getElementById('gridCalcDisplay');
+    const customCols = document.getElementById('customCols');
+    const customRows = document.getElementById('customRows');
+    
+    let originalName = "animation";
+    let currentFrames = []; 
+    let availableGrids = [];
+    let isCustomMode = false;
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         
+        originalName = file.name.replace(/\.[^/.]+$/, "");
         placeholderContainer.style.display = 'none';
         outputCanvas.style.display = 'none';
         gifResultsArea.style.display = 'none';
-        gifStatus.innerText = "Analyzing frames...";
+        gifStatus.innerText = "Analyzing...";
+        
+        // Exibe progresso
         gifProgressContainer.style.display = 'block';
+        gifProgressBar.style.width = '10%';
+        gifProgressBar.innerText = '10%';
         
         const reader = new FileReader();
         reader.onload = function(event) {
             gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas', cumulative: true })
             .then(function (frames) {
-                processGifData(frames);
+                currentFrames = frames;
+                
+                // Dimensões seguras do primeiro frame
+                const tempCanvas = frames[0].getImage(); 
+                const w = tempCanvas.width;
+                const h = tempCanvas.height;
+                
+                // Calcula Auto
+                availableGrids = calculateAllGrids(frames.length, w, h);
+                populateGridSelector(availableGrids);
+                
+                // Configura Manual
+                origFramesDisplay.innerText = frames.length;
+                customCols.value = availableGrids[0].c;
+                customRows.value = availableGrids[0].r;
+
+                updateRenderLogic();
             });
         };
         reader.readAsDataURL(file);
     });
 
-    // Algoritmo de Grade do .exe (Menor desperdício)
-    function getBestGrid(count) {
-        let bestCols = Math.ceil(Math.sqrt(count));
-        let bestRows = Math.ceil(count / bestCols);
-        let minWaste = (bestCols * bestRows) - count;
-
-        for (let c = 1; c <= count; c++) {
-            let r = Math.ceil(count / c);
-            let waste = (c * r) - count;
-            if (waste < minWaste) {
-                minWaste = waste;
-                bestCols = c;
-                bestRows = r;
-            } else if (waste === minWaste) {
-                // Prefere layouts horizontais (tipo 7x2) como o exe
-                if (c > bestCols) {
-                    bestCols = c;
-                    bestRows = r;
-                }
-            }
+    // Lógica de Toggle
+    function toggleCustomMode() {
+        isCustomMode = !isCustomMode;
+        if (isCustomMode) {
+            autoGridArea.style.display = 'none';
+            manualGridArea.style.display = 'flex';
+            manualInfo.style.display = 'block';
+            toggleCustomBtn.innerText = "← Back to Smart Auto";
+            toggleCustomBtn.classList.add("active");
+        } else {
+            autoGridArea.style.display = 'flex';
+            manualGridArea.style.display = 'none';
+            manualInfo.style.display = 'none';
+            toggleCustomBtn.innerText = "✎ Edit Grid Manually";
+            toggleCustomBtn.classList.remove("active");
         }
-        return { c: bestCols, r: bestRows };
+        updateRenderLogic();
     }
 
-    function processGifData(frames) {
-        const count = frames.length;
-        const grid = getBestGrid(count);
-        const delay = frames[0].frameInfo.delay || 10;
-        const fps = Math.round(100 / delay);
-        
-        gifData = { cols: grid.c, rows: grid.r, fps: fps };
+    function triggerUpdate() {
+        gifStatus.innerText = "Updating...";
+        setTimeout(updateRenderLogic, 20);
+    }
 
-        // Força 1024x1024 nativo
-        outputCanvas.width = 1024;
-        outputCanvas.height = 1024;
+    function updateRenderLogic() {
+        if (currentFrames.length === 0) return;
+
+        let selectedGrid;
+
+        if (isCustomMode) {
+            // Lógica Manual
+            const c = parseInt(customCols.value) || 1;
+            const r = parseInt(customRows.value) || 1;
+            const capacity = c * r;
+            const total = currentFrames.length;
+            
+            let diff = capacity - total;
+            let msg = `Grid Capacity: ${capacity} slots. `;
+            
+            if (diff >= 0) {
+                msg += `<span class='good-text'>Perfect (Padding: ${diff})</span>`;
+            } else {
+                msg += `<span class='warn-text'>Warning: Cuts last ${Math.abs(diff)} frames!</span>`;
+            }
+            gridCalcDisplay.innerHTML = msg;
+
+            // Manual usa frames até a capacidade ou total
+            let framesToUse = Math.min(total, capacity);
+            selectedGrid = { c: c, r: r, usedFrames: framesToUse };
+
+        } else {
+            // Lógica Auto
+            const index = gridSelect.value;
+            selectedGrid = availableGrids[index];
+        }
+
+        renderWithGrid(selectedGrid);
+    }
+
+    // --- CÁLCULO AUTO (G2SLA) ---
+    function calculateAllGrids(count, imgW, imgH) {
+        let candidates = [];
+        let imgRatio = imgW / imgH;
+        let frameOptions = [count, count - 1]; 
+
+        frameOptions.forEach(targetCount => {
+            if (targetCount < 1) return;
+            
+            for (let c = 1; c <= 12; c++) {
+                let r = Math.ceil(targetCount / c);
+                let totalSlots = c * r;
+                let waste = totalSlots - targetCount;
+
+                // Filtro relaxado para permitir opções maiores
+                if (waste <= 8) {
+                    let cellW = 1024 / c;
+                    let cellH = 1024 / r;
+                    let cellRatio = cellW / cellH;
+                    let shapeDiff = Math.abs(imgRatio - cellRatio);
+                    
+                    let score = (waste * 1.5) + (shapeDiff * 5); 
+                    if (targetCount < count) score += 2;
+
+                    // Etiquetas Limpas
+                    let label = `${c} x ${r}`;
+                    if (c > r) label += " - Horizontal";
+                    else if (r > c) label += " - Vertical";
+                    else label += " - Square";
+
+                    if (targetCount < count) label += " (-1 Frame)";
+
+                    candidates.push({ 
+                        c: c, r: r, usedFrames: targetCount, 
+                        score: score, label: label 
+                    });
+                }
+            }
+        });
+
+        candidates.sort((a, b) => a.score - b.score);
+        if (candidates.length > 0) candidates[0].label = "★ " + candidates[0].label;
+        return candidates;
+    }
+
+    function populateGridSelector(grids) {
+        gridSelect.innerHTML = "";
+        grids.forEach((g, index) => {
+            let opt = document.createElement("option");
+            opt.value = index;
+            opt.innerText = g.label;
+            gridSelect.appendChild(opt);
+        });
+        gridSelect.selectedIndex = 0;
+    }
+
+    // --- RENDERIZAÇÃO FINAL ---
+    function renderWithGrid(grid) {
+        const targetSize = parseInt(resSelect.value);
+        
+        // Garante uso seguro de frames
+        let safeUsedFrames = grid.usedFrames;
+        if (safeUsedFrames > currentFrames.length) safeUsedFrames = currentFrames.length;
+
+        const framesToRender = currentFrames.slice(0, safeUsedFrames);
+        const count = framesToRender.length;
+        
+        const delay = currentFrames[0].frameInfo.delay || 10;
+        const fps = Math.round(100 / delay);
+
+        outputCanvas.width = targetSize;
+        outputCanvas.height = targetSize;
         const ctx = outputCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        ctx.clearRect(0, 0, targetSize, targetSize);
 
-        const cellW = 1024 / grid.c;
-        const cellH = 1024 / grid.r;
+        const cellW = targetSize / grid.c;
+        const cellH = targetSize / grid.r;
 
-        frames.forEach((f, i) => {
+        // Desenha Frames (Modo Seguro: getImage)
+        framesToRender.forEach((f, i) => {
             const x = (i % grid.c) * cellW;
             const y = Math.floor(i / grid.c) * cellH;
-            // O segredo do programa: DrawImage ignorando o aspect ratio (STRETCH)
-            ctx.drawImage(f.getImage(), 0, 0, f.frameInfo.width, f.frameInfo.height, x, y, cellW, cellH);
+            const frameImg = f.getImage();
+            ctx.drawImage(frameImg, 0, 0, frameImg.width, frameImg.height, x, y, cellW, cellH);
         });
 
-        // Preenche o resto da grade com o último frame (Clone do comportamento do exe)
-        const totalCells = grid.c * grid.r;
-        if (totalCells > count) {
-            const lastFrame = frames[count - 1];
-            for (let i = count; i < totalCells; i++) {
+        // Padding (Preenche vazios)
+        const totalSlots = grid.c * grid.r;
+        if (totalSlots > count && count > 0) {
+            const lastFrame = framesToRender[count - 1];
+            const lastImg = lastFrame.getImage();
+            
+            for (let i = count; i < totalSlots; i++) {
                 const x = (i % grid.c) * cellW;
                 const y = Math.floor(i / grid.c) * cellH;
-                ctx.drawImage(lastFrame.getImage(), 0, 0, lastFrame.frameInfo.width, lastFrame.frameInfo.height, x, y, cellW, cellH);
+                ctx.drawImage(lastImg, 0, 0, lastImg.width, lastImg.height, x, y, cellW, cellH);
             }
         }
 
+        // Atualiza Progresso e Status
         gifProgressBar.style.width = '100%';
+        gifProgressBar.innerText = '100%';
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
         
-        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${grid.c}x${grid.r} | Frames: ${count}`;
+        let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
+        let finalFileName = `${cleanName}.anim;${grid.c};${grid.r};${fps}.png`;
+        
+        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Size: ${targetSize}px`;
+        fileNameDisplay.innerText = finalFileName;
+        
         outputCanvas.style.display = 'block';
         gifResultsArea.style.display = 'flex';
 
-        document.getElementById('btn1024').onclick = function() {
+        document.getElementById('btnDownload').onclick = function() {
             const link = document.createElement('a');
-            link.download = `MMC_${grid.c}_${grid.r}_${fps}.png`;
+            link.download = finalFileName;
             link.href = outputCanvas.toDataURL("image/png");
             link.click();
         };
