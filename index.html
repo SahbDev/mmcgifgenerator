@@ -41,14 +41,19 @@
         .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
 
-        /* TABS */
-        .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
+        /* TABS - CORREÇÃO DE Z-INDEX */
+        .tabs { 
+            display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px;
+            position: relative; z-index: 1000; /* Garante que fica por cima de tudo */
+        }
         .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-btn:hover { color: #fff; }
+        
+        /* A classe active é apenas visual agora, a logica é feita via JS display */
         .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
 
+        /* Conteúdo das abas */
         .tab-content { display: none; animation: fadeIn 0.5s; } 
-        .tab-content.active { display: block; } 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* UI ELEMENTS */
@@ -105,8 +110,7 @@
                 <button id="tabBtnVideo" class="tab-btn" onclick="switchTab('video')">Video to GIF</button>
             </div>
 
-            <div id="tabGif" class="tab-content active">
-                <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
+            <div id="tabGif" class="tab-content" style="display: block;"> <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
                 <label for="gifInput" class="custom-file-upload">Select GIF File</label>
                 <input type="file" id="gifInput" accept="image/gif">
                 <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
@@ -124,8 +128,7 @@
                 </div>
             </div>
 
-            <div id="tabVideo" class="tab-content">
-                <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
+            <div id="tabVideo" class="tab-content" style="display: none;"> <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
                 <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
                 <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg">
                 <div class="controls-grid">
@@ -151,8 +154,35 @@
 
 <script>
     // ==========================================================
+    // 0. TAB LOGIC (DEFINED FIRST FOR ROBUSTNESS)
+    // ==========================================================
+    function switchTab(mode) {
+        // Pega elementos
+        const tGif = document.getElementById('tabGif');
+        const tVid = document.getElementById('tabVideo');
+        const bGif = document.getElementById('tabBtnGif');
+        const bVid = document.getElementById('tabBtnVideo');
+
+        // Reset visual das classes (para o sublinhado do botão)
+        bGif.classList.remove('active');
+        bVid.classList.remove('active');
+
+        // Força bruta no display
+        if (mode === 'gif') {
+            tGif.style.display = 'block';
+            tVid.style.display = 'none';
+            bGif.classList.add('active');
+        } else {
+            tGif.style.display = 'none';
+            tVid.style.display = 'block';
+            bVid.classList.add('active');
+        }
+    }
+
+    // ==========================================================
     // 1. SECURITY SYSTEM
     // ==========================================================
+    
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
     const LINK_EXPIRATION_MINUTES = 2; 
 
@@ -197,29 +227,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. TAB LOGIC (Global Function for Robustness)
-    // ==========================================================
-    function switchTab(mode) {
-        const tabBtnGif = document.getElementById('tabBtnGif');
-        const tabBtnVideo = document.getElementById('tabBtnVideo');
-        const tabGif = document.getElementById('tabGif');
-        const tabVideo = document.getElementById('tabVideo');
-
-        if (mode === 'gif') {
-            tabGif.classList.add('active');
-            tabVideo.classList.remove('active');
-            tabBtnGif.classList.add('active');
-            tabBtnVideo.classList.remove('active');
-        } else {
-            tabVideo.classList.add('active');
-            tabGif.classList.remove('active');
-            tabBtnVideo.classList.add('active');
-            tabBtnGif.classList.remove('active');
-        }
-    }
-
-    // ==========================================================
-    // 3. GIF TOOL LOGIC
+    // 2. GIF TO TEXTURE LOGIC
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -265,6 +273,7 @@
         const len = frames.length, cols = Math.ceil(Math.sqrt(len)), rows = Math.ceil(len / cols);
         const fps = frames[0].frameInfo.delay > 0 ? Math.round(100 / frames[0].frameInfo.delay) : 15;
         gifData = { cols, rows, fps };
+        
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
@@ -298,7 +307,7 @@
     function resetGifTool() { resetGifUiState(); placeholderContainer.style.display = 'block'; gifStatus.innerText = "Waiting for file..."; gifInput.value = ""; }
 
     // ==========================================================
-    // 4. VIDEO TOOL LOGIC
+    // 3. VIDEO TOOL LOGIC
     // ==========================================================
     const videoInput = document.getElementById('videoInput'), convertVideoBtn = document.getElementById('convertVideoBtn');
     const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
@@ -331,7 +340,6 @@
                     const actions = document.createElement('div'); actions.className = 'result-actions';
                     const dl = document.createElement('a'); dl.href = obj.image; dl.download = "video.gif"; dl.innerText = "Download GIF"; dl.className = "download-link-btn";
                     
-                    // FIXED: START OVER NOW CALLS THE PROPER RESET FUNCTION
                     const rst = document.createElement('button'); 
                     rst.innerText = "Start Over"; 
                     rst.className = "action-btn"; 
@@ -343,7 +351,6 @@
         };
     });
 
-    // FULL RESET FUNCTION
     function resetVideoTool() {
         videoPreviewContainer.innerHTML = "";
         videoStatus.innerText = "Waiting for video...";
