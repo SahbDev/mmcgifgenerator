@@ -157,8 +157,8 @@
     <h1>MMC - Creator Suite</h1>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="openTab('tabGif')">GIF to Texture</button>
-        <button class="tab-btn" onclick="openTab('tabVideo')">Video to GIF</button>
+        <button class="tab-btn active" onclick="openTab('tabGif', event)">GIF to Texture</button>
+        <button class="tab-btn" onclick="openTab('tabVideo', event)">Video to GIF</button>
     </div>
 
     <div id="tabGif" class="tab-content active">
@@ -170,7 +170,8 @@
         <div id="gifStatus" class="status-msg">Waiting for file...</div>
         <div id="gifInstruction" class="instruction-text"></div>
 
-        <div class="hidden"><img id="tempImg" rel:auto_play="0" /></div>
+        <div id="gifProcessor" class="hidden"></div>
+        
         <canvas id="outputCanvas"></canvas>
         
         <div style="margin-top: 20px;">
@@ -214,27 +215,20 @@
 
 <script>
     // --- TAB LOGIC ---
-    function openTab(tabName) {
-        // Hide all tabs
+    function openTab(tabName, evt) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        // Show selected
         document.getElementById(tabName).classList.add('active');
-        
-        // Highlight button
-        // Find the button that called this function based on text is tricky, 
-        // simpler to just iterate buttons in order usually, but here we cheat slightly with event delegation or direct class manipulation
-        event.currentTarget.classList.add('active');
+        if(evt) evt.currentTarget.classList.add('active');
     }
 
     // ==========================================================
-    // LOGIC: GIF TO TEXTURE
+    // LOGIC: GIF TO TEXTURE (CORRIGIDO)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
     const gifInstruction = document.getElementById('gifInstruction');
-    const tempImg = document.getElementById('tempImg');
+    const gifProcessor = document.getElementById('gifProcessor'); // Div oculta
     const outputCanvas = document.getElementById('outputCanvas');
     const btn1024 = document.getElementById('btn1024');
     const btn2048 = document.getElementById('btn2048');
@@ -254,16 +248,20 @@
 
         const reader = new FileReader();
         reader.onload = function(event) {
-            const parent = tempImg.parentElement;
-            parent.innerHTML = ''; 
+            // CORREÇÃO CRÍTICA:
+            // Limpa completamente o processador anterior e cria uma nova tag IMG.
+            // A biblioteca LibGif modifica o DOM, então precisamos resetar do zero.
+            gifProcessor.innerHTML = ''; 
+            
             const newImg = document.createElement('img');
             newImg.src = event.target.result;
-            newImg.setAttribute('rel:auto_play', '0');
-            parent.appendChild(newImg);
+            newImg.setAttribute('rel:auto_play', '0'); // Impede play automático
+            gifProcessor.appendChild(newImg);
 
+            // Inicia a biblioteca na nova imagem
             superGif = new SuperGif({ gif: newImg } );
             superGif.load(function() {
-                processGif();
+                processGif(); // Só processa quando terminar de ler
             });
         };
         reader.readAsDataURL(file);
@@ -271,6 +269,13 @@
 
     function processGif() {
         const len = superGif.get_length();
+        
+        // Se a biblioteca falhar em contar frames, avisa o erro
+        if (len <= 1) {
+            gifStatus.innerText = "Error: Could not separate frames. Try another GIF.";
+            return;
+        }
+
         const width = superGif.get_canvas().width;
         const height = superGif.get_canvas().height;
         const cols = Math.ceil(Math.sqrt(len));
@@ -291,14 +296,16 @@
             <span style="font-size: 0.85em; opacity: 0.8;">(You can rename "YOURGIFNAME", but keep the numbers at the end).</span>
         `;
 
+        // Configura e Desenha o Canvas
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d');
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
         for (let i = 0; i < len; i++) {
-            superGif.move_to(i);
-            const frameCanvas = superGif.get_canvas();
+            superGif.move_to(i); // Move a biblioteca para o frame i
+            const frameCanvas = superGif.get_canvas(); // Pega o frame atual
+            
             const col = i % cols;
             const row = Math.floor(i / cols);
             ctx.drawImage(frameCanvas, col * width, row * height);
@@ -326,7 +333,7 @@
     }
 
     // ==========================================================
-    // LOGIC: VIDEO TO GIF
+    // LOGIC: VIDEO TO GIF (Mantido igual)
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
