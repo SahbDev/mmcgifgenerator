@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTILO LIMPO E ESCURO (MMC V10) --- */
+        /* --- ESTILO MMC CLASSIC (DARK) --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -17,7 +17,6 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* SECURITY SCREEN */
         #lockedScreen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 80vh; text-align: center; color: #d9534f;
@@ -27,7 +26,6 @@
         #lockedScreen p { color: #888; font-size: 1.1em; }
         #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; border: 1px solid #333; padding: 10px; background: #1a1a1a; }
 
-        /* MAIN APP */
         #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
@@ -38,22 +36,18 @@
         }
 
         h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
-        
         .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
         .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
 
-        /* UPLOAD BUTTON */
         input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 15px 30px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        /* ACTION BUTTONS */
         button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
         button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
         button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
 
-        /* CONTROLS PANEL */
         .controls-panel {
             background: #222; border: 1px solid #444; border-radius: 6px;
             padding: 20px; margin-bottom: 20px; width: 100%; max-width: 500px;
@@ -69,16 +63,15 @@
             font-size: 13px; cursor: pointer; width: 100%;
         }
 
-        .bg-option { display: flex; align-items: center; font-size: 0.85em; color: #bbb; cursor: pointer; }
+        .bg-option { display: flex; align-items: center; font-size: 0.85em; color: #bbb; cursor: pointer; margin-bottom: 5px; }
         .bg-option input { margin-right: 10px; cursor: pointer; transform: scale(1.2); }
 
         .grid-info-text { font-family: monospace; color: #4CAF50; font-size: 0.9em; margin-top: 2px; }
 
-        /* PREVIEW */
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; border: 1px solid #333; }
         
-        canvas { display: none; } /* Canvas Oculto */
+        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background: transparent; }
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; flex-direction: column; align-items: center; }
         
         .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
@@ -126,6 +119,7 @@
             <div id="gifResultsArea">
                 
                 <div class="controls-panel">
+                    
                     <div class="control-group">
                         <label>Texture Quality / Cost:</label>
                         <select id="resSelect" class="res-select">
@@ -135,6 +129,13 @@
                     </div>
 
                     <div class="control-group">
+                        <label>Frame Extraction Logic:</label>
+                        
+                        <label class="bg-option" title="Uncheck if frames look weird/ghostly. Unchecked = Raw C# Style">
+                            <input type="checkbox" id="cumulativeChkbox" checked> 
+                            Smart Frame Merging (Cumulative)
+                        </label>
+
                         <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
                             <input type="checkbox" id="transparentChkbox" checked> 
                             Transparency (PNG) 
@@ -146,6 +147,7 @@
                         <label>Auto-Calculated Grid:</label>
                         <div id="gridInfoDisplay" class="grid-info-text">Waiting...</div>
                     </div>
+
                 </div>
 
                 <div class="filename-warning">
@@ -208,7 +210,7 @@
     checkAccess();
 
     // ==========================================
-    // 2. LÓGICA DE GERAÇÃO (CORREÇÃO DE DISTORÇÃO)
+    // 2. GIF LOGIC (V12 - TOGGLE CUMULATIVE)
     // ==========================================
     const gifInput = document.getElementById('gifInput');
     const previewImg = document.getElementById('previewImg');
@@ -216,8 +218,10 @@
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const gifResultsArea = document.getElementById('gifResultsArea');
+    
     const resSelect = document.getElementById('resSelect');
     const transparentChkbox = document.getElementById('transparentChkbox');
+    const cumulativeChkbox = document.getElementById('cumulativeChkbox'); // NOVO
     const gridInfoDisplay = document.getElementById('gridInfoDisplay');
     const btnDownload = document.getElementById('btnDownload');
     const canvas = document.getElementById('outputCanvas');
@@ -227,17 +231,25 @@
     let yFrames = 0;
     let originalName = "";
     let finalFileName = "";
+    let lastFile = null;
+
+    // Se mudar a opção "Cumulative", recarrega o GIF
+    cumulativeChkbox.addEventListener('change', function() {
+        if(lastFile) processFile(lastFile);
+    });
 
     gifInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
+        if (e.target.files[0]) {
+            lastFile = e.target.files[0];
+            processFile(lastFile);
+        }
+    });
+
+    function processFile(file) {
         originalName = file.name.replace(/\.[^/.]+$/, "");
         
         const reader = new FileReader();
-        reader.onload = function(event) {
-            previewImg.src = event.target.result;
-        };
+        reader.onload = function(event) { previewImg.src = event.target.result; };
         reader.readAsDataURL(file);
 
         gifStatus.innerText = "Analyzing Frames...";
@@ -245,10 +257,15 @@
         gifProgressBar.style.width = '10%';
         gifResultsArea.style.display = 'none';
 
-        gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: true })
+        // LÓGICA DE EXTRAÇÃO: Verifica checkbox "Cumulative"
+        // true = Monta frames (Navegador)
+        // false = Frames Crus (C# GDI+)
+        let isCumulative = cumulativeChkbox.checked;
+
+        gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: isCumulative })
         .then(function (frames) {
             currentFrames = frames;
-            calculateGridLogic(); // Auto Calc
+            calculateGridLogic(); 
             
             gifStatus.innerText = "Ready to Convert!";
             gifProgressBar.style.width = '100%';
@@ -257,9 +274,9 @@
             gifResultsArea.style.display = 'flex';
             btnDownload.disabled = false;
         });
-    });
+    }
 
-    // LÓGICA DE GRADE DO C#
+    // CLONE DA LÓGICA DE GRADE C#
     function calculateGridLogic() {
         let frameCount = currentFrames.length;
         let num = Math.round(Math.sqrt(frameCount)); 
@@ -277,7 +294,6 @@
         }
 
         gridInfoDisplay.innerText = `${xFrames} cols x ${yFrames} rows (${frameCount} frames)`;
-        
         let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
         finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
     }
@@ -294,12 +310,11 @@
             let width = tempImg.width;
             let height = tempImg.height;
             
-            // Cria a grade gigante original
             canvas.width = xFrames * width;
             canvas.height = yFrames * height;
             let ctx = canvas.getContext('2d');
 
-            // --- DESENHA GRADE ORIGINAL ---
+            // --- LÓGICA DE DESENHO (C# CLONE) ---
             let num2 = currentFrames.length;
             if (num2 % 2 != 0) num2++; 
             let num3 = 0; 
@@ -322,20 +337,15 @@
                 }
             }
 
-            // --- REDIMENSIONAMENTO CORRIGIDO (C# STYLE) ---
-            // O programa original NÃO força um quadrado perfeito se a imagem for menor.
-            // Ele apenas corta (cap) cada dimensão se passar do limite.
-            // Isso evita distorção em grades "compridas" (ex: 5x16).
-            
-            let targetMax = parseInt(resSelect.value); // 1024 ou 2048
+            // --- REDIMENSIONAMENTO (ASPECT RATIO PRESERVED - C# LOGIC) ---
+            let targetMax = parseInt(resSelect.value); 
             let fullW = canvas.width;
             let fullH = canvas.height;
 
-            // Lógica exata do C#: int num6 = (width > 1024) ? 1024 : width;
+            // Se for maior que o target (1024 ou 2048), reduz. Senão, mantém.
             let finalW = (fullW > targetMax) ? targetMax : fullW;
             let finalH = (fullH > targetMax) ? targetMax : fullH;
             
-            // Se precisar redimensionar
             if (fullW > finalW || fullH > finalH) {
                 let tempCanvas = document.createElement('canvas');
                 let tCtx = tempCanvas.getContext('2d');
@@ -347,7 +357,6 @@
                 tCtx.imageSmoothingQuality = 'high';
                 tCtx.drawImage(canvas, 0, 0, finalW, finalH);
                 
-                // Substitui canvas original
                 canvas.width = finalW; 
                 canvas.height = finalH;
                 ctx.drawImage(tempCanvas, 0, 0);
@@ -358,7 +367,7 @@
             link.download = finalFileName;
 
             if (!transparentChkbox.checked) {
-                // JPG (Fundo Preto)
+                // JPG
                 let compositeCanvas = document.createElement('canvas');
                 compositeCanvas.width = canvas.width;
                 compositeCanvas.height = canvas.height;
